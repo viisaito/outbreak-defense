@@ -13,12 +13,74 @@ export class GameScene extends Scene {
     // Base cobre altura total da tela para teste
     this.base = this.add.rectangle(750, 225, 40, 450, 0xff4400);
 
+    // ── SLOTS DE TORRE ──────────────────────────────────────────
+    this.slotSelecionado = null;  // qual slot está selecionado agora
+    this.slots = [];
+
+    const posicoes = [
+      { x: 180, y: 130 },
+      { x: 360, y: 280 },
+      { x: 530, y: 160 },
+    ];
+
+    posicoes.forEach((pos, i) => {
+      // Fundo do slot
+      const slot = this.add.rectangle(pos.x, pos.y, 52, 52, 0x444466)
+        .setInteractive()
+        .setStrokeStyle(2, 0x8888aa);
+
+      slot.torre = null;  // null = vazio
+
+      // Número do slot (para identificar visualmente)
+      this.add.text(pos.x, pos.y, (i + 1).toString(), {
+        fontSize: '16px', color: '#aaaacc'
+      }).setOrigin(0.5);
+
+      // Hover: ilumina ao passar o mouse
+      slot.on('pointerover', () => {
+        if (!slot.torre && slot !== this.slotSelecionado) {
+          slot.setFillStyle(0x666688);
+        }
+      });
+
+      slot.on('pointerout', () => {
+        if (slot !== this.slotSelecionado) {
+          slot.setFillStyle(slot.torre ? 0x223388 : 0x444466);
+        }
+      });
+
+      // Clique: seleciona ou desseleciona o slot
+      slot.on('pointerdown', () => {
+        if (slot.torre) return; // slot ocupado, ignora
+
+        if (this.slotSelecionado === slot) {
+          // Clicou no mesmo → desseleciona
+          slot.setFillStyle(0x444466);
+          this.slotSelecionado = null;
+        } else {
+          // Desseleciona o anterior, se houver
+          if (this.slotSelecionado) {
+            this.slotSelecionado.setFillStyle(0x444466);
+          }
+          // Seleciona este
+          slot.setFillStyle(0x00cc66);
+          this.slotSelecionado = slot;
+        }
+      });
+
+      this.slots.push(slot);
+    });
+    // ────────────────────────────────────────────────────────────
+
     // HUD
     this.textoHP = this.add.text(16, 16, 'Base HP: 200', {
       fontSize: '18px', color: '#ffffff'
     });
     this.textoOnda = this.add.text(16, 44, 'Onda: 0 / 5', {
       fontSize: '18px', color: '#ffdd00'
+    });
+    this.textoSlot = this.add.text(16, 420, 'Clique num slot para selecionar', {
+      fontSize: '13px', color: '#aaaacc'
     });
 
     this.inimigos = [];
@@ -81,6 +143,14 @@ export class GameScene extends Scene {
 
   update() {
     if (this.gameOver) return;
+
+    // Atualiza dica de slot no HUD
+    if (this.slotSelecionado) {
+      const idx = this.slots.indexOf(this.slotSelecionado) + 1;
+      this.textoSlot.setText(`Slot ${idx} selecionado — [futuro: pressione tecla para colocar torre]`);
+    } else {
+      this.textoSlot.setText('Clique num slot para selecionar');
+    }
 
     for (let i = this.inimigos.length - 1; i >= 0; i--) {
       const z = this.inimigos[i];
