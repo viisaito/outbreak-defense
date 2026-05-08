@@ -1,9 +1,12 @@
 import { Game, AUTO } from 'phaser';
-import { BootScene }     from './scenes/BootScene.js';
-import { MenuScene }     from './scenes/MenuScene.js';
-import { GameScene }     from './scenes/GameScene.js';
-import { GameOverScene } from './scenes/GameOverScene.js';
-import { VictoryScene }  from './scenes/VictoryScene.js';
+import { BootScene }       from './scenes/BootScene.js';
+import { MenuScene }       from './scenes/MenuScene.js';
+import { StoryScene }      from './scenes/StoryScene.js';
+import { CharacterScene }  from './scenes/CharacterScene.js';
+import { LoadScene }       from './scenes/LoadScene.js';
+import { GameScene }       from './scenes/GameScene.js';
+import { GameOverScene }   from './scenes/GameOverScene.js';
+import { VictoryScene }    from './scenes/VictoryScene.js';
 
 const config = {
   type: AUTO,
@@ -14,7 +17,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false }
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene, VictoryScene]
+  scene: [BootScene, MenuScene, StoryScene, CharacterScene, LoadScene, GameScene, GameOverScene, VictoryScene]
 };
 
 new Game(config);
