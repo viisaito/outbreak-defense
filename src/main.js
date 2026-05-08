@@ -3,8 +3,9 @@ import { BootScene }       from './scenes/BootScene.js';
 import { MenuScene }       from './scenes/MenuScene.js';
 import { StoryScene }      from './scenes/StoryScene.js';
 import { CharacterScene }  from './scenes/CharacterScene.js';
-import { LoadScene }       from './scenes/LoadScene.js';
-import { GameScene }       from './scenes/GameScene.js';
+import { LoadScene }           from './scenes/LoadScene.js';
+import { AchievementsScene }   from './scenes/AchievementsScene.js';
+import { GameScene }           from './scenes/GameScene.js';
 import { GameOverScene }   from './scenes/GameOverScene.js';
 import { VictoryScene }    from './scenes/VictoryScene.js';
 
@@ -17,7 +18,7 @@ const config = {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false }
   },
-  scene: [BootScene, MenuScene, StoryScene, CharacterScene, LoadScene, GameScene, GameOverScene, VictoryScene]
+  scene: [BootScene, MenuScene, StoryScene, CharacterScene, LoadScene, AchievementsScene, GameScene, GameOverScene, VictoryScene]
 };
 
 new Game(config);

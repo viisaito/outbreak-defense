@@ -31,8 +31,9 @@ export class CharacterScene extends Scene {
     this.nome        = '';
     this.nomeAtivo   = false;
 
-    // Slot passado pela LoadScene; null = escolhe automaticamente
-    this.slotAlvo = this.scene.settings.data?.slot || null;
+    // Slot e modo passados pela StoryScene / LoadScene
+    this.slotAlvo      = this.scene.settings.data?.slot || null;
+    this.modoJogo      = this.scene.settings.data?.modo || 'normal';
 
     // ── Fundo ──────────────────────────────────────────────────
     this.add.rectangle(400, 225, 800, 450, 0x12122a);
@@ -289,6 +290,9 @@ export class CharacterScene extends Scene {
       if (slot === 0) slot = 1; // ambos ocupados → sobrescreve slot 1
     }
     localStorage.setItem(SAVE_KEYS[slot - 1], JSON.stringify(saveData));
+
+    // Salva modo de jogo no registry para GameScene usar
+    this.registry.set('modoJogo', this.modoJogo);
 
     // Salva no registry para outras cenas usarem durante a sessão
     this.registry.set('personagem', {

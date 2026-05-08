@@ -9,7 +9,8 @@ export class MenuScene extends Scene {
     const cx = 400;
     const cy = 225;
 
-    this.overlay = null; // referência ao modal de sobrescrita
+    this.overlay  = null; // referência ao overlay ativo
+    this.modoEscolhido = null; // guarda o modo antes de checar slots
 
     // ── Fundo ──────────────────────────────────────────────────
     this.add.rectangle(cx, cy, 800, 450, 0x1a1a2e);
@@ -30,42 +31,154 @@ export class MenuScene extends Scene {
     this.add.rectangle(cx, 215, 200, 1, 0x3dff6e);
 
     // ── Botões ─────────────────────────────────────────────────
-    this.criarBotao(cx, 268, 'START',   () => this.clicarStart());
-    this.criarBotao(cx, 318, 'LOAD',    () => this.fecharOverlay(() => this.scene.start('LoadScene')));
-    this.criarBotao(cx, 368, 'OPTIONS', () => this.avisoEmBreve('OPTIONS'));
+    this.criarBotao(cx, 252, 'START',        () => this.clicarStart());
+    this.criarBotao(cx, 292, 'LOAD',         () => this.fecharOverlay(() => this.scene.start('LoadScene')));
+    this.criarBotao(cx, 332, 'ACHIEVEMENTS', () => this.fecharOverlay(() => this.scene.start('AchievementsScene')));
+    this.criarBotao(cx, 372, 'OPTIONS',      () => this.avisoEmBreve('OPTIONS'));
 
     this.add.text(790, 440, 'v0.1', { fontSize: '11px', color: '#444466' }).setOrigin(1);
   }
 
-  // ── Lógica do START ────────────────────────────────────────
+  // ── PASSO 1: clicou START → escolha de modo ───────────────
   clicarStart() {
-    // Se o overlay já está aberto, fecha
     if (this.overlay) { this.fecharOverlay(); return; }
+    this.abrirOverlayModo();
+  }
+
+  abrirOverlayModo() {
+    const itens = [];
+
+    // Fundo
+    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.8).setDepth(20));
+
+    itens.push(this.add.text(400, 118, 'MODO DE JOGO', {
+      fontSize: '18px', color: '#ffffff', letterSpacing: 5
+    }).setOrigin(0.5).setDepth(21));
+
+    itens.push(this.add.text(400, 148, 'Escolha a dificuldade antes de começar', {
+      fontSize: '12px', color: '#555577'
+    }).setOrigin(0.5).setDepth(21));
+
+    // ── Card NORMAL ──────────────────────────────────────────
+    itens.push(...this.criarCardModo(
+      210, 260,
+      'NORMAL',
+      '#3dff6e',
+      0x1a2e1a,
+      0x2a5a2a,
+      [
+        'Velocidade dos zumbis padrão',
+        'Dano reduzido na base',
+        'Ondas progressivas'
+      ],
+      () => this.selecionarModo('normal')
+    ));
+
+    // ── Card DIFÍCIL ─────────────────────────────────────────
+    itens.push(...this.criarCardModo(
+      590, 260,
+      'DIFÍCIL',
+      '#ff4444',
+      0x2e1a1a,
+      0x5a2a2a,
+      [
+        'Zumbis mais rápidos e resistentes',
+        'Dano aumentado na base',
+        'Mais ondas simultâneas'
+      ],
+      () => this.selecionarModo('dificil')
+    ));
+
+    // Cancelar
+    const cancelar = this.add.text(400, 408, 'CANCELAR', {
+      fontSize: '13px', color: '#555577', letterSpacing: 3
+    }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
+
+    cancelar.on('pointerover', () => cancelar.setStyle({ color: '#aaaacc' }));
+    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#555577' }));
+    cancelar.on('pointerup',   () => this.fecharOverlay());
+    itens.push(cancelar);
+
+    this.overlay = itens;
+  }
+
+  criarCardModo(cx, cy, label, cor, fundoNormal, fundoHover, bullets, callback) {
+    const itens = [];
+
+    const card = this.add.rectangle(cx, cy, 300, 210, fundoNormal)
+      .setStrokeStyle(2, fundoHover)
+      .setDepth(21)
+      .setInteractive({ useHandCursor: true });
+
+    // Título do modo
+    const titulo = this.add.text(cx, cy - 78, label, {
+      fontSize: '22px', color: cor, letterSpacing: 4, fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(22);
+
+    // Linha divisória
+    itens.push(this.add.rectangle(cx, cy - 56, 220, 1, fundoHover).setDepth(22));
+
+    // Bullet points de características
+    bullets.forEach((txt, i) => {
+      itens.push(this.add.text(cx - 96, cy - 38 + i * 26, '▸  ' + txt, {
+        fontSize: '11px', color: '#aaaacc'
+      }).setDepth(22));
+    });
+
+    // Badge inferior
+    const badge = this.add.rectangle(cx, cy + 72, 180, 28, fundoHover).setDepth(22);
+    const badgeTxt = this.add.text(cx, cy + 72, 'SELECIONAR', {
+      fontSize: '12px', color: cor, letterSpacing: 3
+    }).setOrigin(0.5).setDepth(23);
+
+    // Hover
+    card.on('pointerover', () => {
+      card.setFillStyle(fundoHover);
+      card.setStrokeStyle(2, cor);
+      badgeTxt.setStyle({ color: '#ffffff' });
+    });
+    card.on('pointerout', () => {
+      card.setFillStyle(fundoNormal);
+      card.setStrokeStyle(2, fundoHover);
+      badgeTxt.setStyle({ color: cor });
+    });
+    card.on('pointerup', () => callback());
+
+    itens.push(card, titulo, badge, badgeTxt);
+    return itens;
+  }
+
+  // ── PASSO 2: modo escolhido → checa slots ─────────────────
+  selecionarModo(modo) {
+    this.modoEscolhido = modo;
+
+    // Modo difícil ainda não implementado
+    if (modo === 'dificil') {
+      this.fecharOverlay();
+      this.avisoEmBreve('Modo Difícil');
+      return;
+    }
+
+    // Salva o modo no registro para GameScene usar
+    this.registry.set('modoJogo', modo);
 
     const slot1 = localStorage.getItem(SAVE_KEYS[0]);
     const slot2 = localStorage.getItem(SAVE_KEYS[1]);
 
     if (slot1 && slot2) {
-      // Ambos ocupados → pergunta qual sobrescrever
-      this.abrirOverlaySobrescrita(
-        JSON.parse(slot1),
-        JSON.parse(slot2)
-      );
+      // Fecha overlay de modo e abre overlay de slot
+      this.fecharOverlay(() => this.abrirOverlaySobrescrita(JSON.parse(slot1), JSON.parse(slot2)));
     } else {
-      // Pelo menos um slot livre → vai direto, CharacterScene escolhe o slot
-      this.scene.start('StoryScene');
+      this.fecharOverlay(() => this.scene.start('StoryScene', { modo }));
     }
   }
 
-  // ── Modal de escolha de slot ───────────────────────────────
+  // ── Overlay de sobrescrita de slot ────────────────────────
   abrirOverlaySobrescrita(save1, save2) {
-    const itens = []; // guarda todos os objetos do overlay para destruir depois
+    const itens = [];
 
-    // Fundo semitransparente
-    const bg = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.75).setDepth(20);
-    itens.push(bg);
+    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.75).setDepth(20));
 
-    // Título
     itens.push(this.add.text(400, 105, 'AMBOS OS SLOTS ESTÃO OCUPADOS', {
       fontSize: '15px', color: '#ff9944', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21));
@@ -74,13 +187,10 @@ export class MenuScene extends Scene {
       fontSize: '13px', color: '#aaaacc'
     }).setOrigin(0.5).setDepth(21));
 
-    // Cards dos dois slots
     [save1, save2].forEach((save, i) => {
-      const cy = 220 + i * 90;
-      itens.push(...this.criarCardSlot(i + 1, cy, save));
+      itens.push(...this.criarCardSlot(i + 1, 220 + i * 90, save));
     });
 
-    // Botão cancelar
     const cancelar = this.add.text(400, 400, 'CANCELAR', {
       fontSize: '14px', color: '#555577', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
@@ -90,7 +200,6 @@ export class MenuScene extends Scene {
     cancelar.on('pointerup',   () => this.fecharOverlay());
     itens.push(cancelar);
 
-    // Guarda referência para destruir depois
     this.overlay = itens;
   }
 
@@ -98,44 +207,34 @@ export class MenuScene extends Scene {
     const itens = [];
 
     const card = this.add.rectangle(400, cy, 500, 72, 0x1e1e3a)
-      .setStrokeStyle(1, 0x333355)
-      .setDepth(21)
-      .setInteractive({ useHandCursor: true });
+      .setStrokeStyle(1, 0x333355).setDepth(21).setInteractive({ useHandCursor: true });
 
-    const rotulo = this.add.text(148, cy - 28, 'SAVE ' + numero, {
+    itens.push(this.add.text(148, cy - 28, 'SAVE ' + numero, {
       fontSize: '10px', color: '#3dff6e', letterSpacing: 2
-    }).setDepth(22);
+    }).setDepth(22));
 
-    const nome = this.add.text(148, cy - 10, save.nome, {
+    itens.push(this.add.text(148, cy - 10, save.nome, {
       fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
-    }).setDepth(22);
+    }).setDepth(22));
 
-    const detalhe = this.add.text(148, cy + 14, save.savedAt + '   •   ' +
-      (save.genero === 'masc' ? 'Masculino' : 'Feminino'), {
+    itens.push(this.add.text(148, cy + 14,
+      save.savedAt + '   •   ' + (save.genero === 'masc' ? 'Masculino' : 'Feminino'), {
       fontSize: '11px', color: '#666688'
-    }).setDepth(22);
+    }).setDepth(22));
 
     const aviso = this.add.text(634, cy, '⚠ sobrescrever', {
       fontSize: '11px', color: '#aa4422'
     }).setOrigin(1, 0.5).setDepth(22);
 
-    card.on('pointerover', () => {
-      card.setStrokeStyle(1, 0xff6633);
-      card.setFillStyle(0x2a1a1a);
-      aviso.setStyle({ color: '#ff6633' });
-    });
-    card.on('pointerout', () => {
-      card.setStrokeStyle(1, 0x333355);
-      card.setFillStyle(0x1e1e3a);
-      aviso.setStyle({ color: '#aa4422' });
-    });
-    card.on('pointerup', () => {
+    card.on('pointerover', () => { card.setStrokeStyle(1, 0xff6633); card.setFillStyle(0x2a1a1a); aviso.setStyle({ color: '#ff6633' }); });
+    card.on('pointerout',  () => { card.setStrokeStyle(1, 0x333355); card.setFillStyle(0x1e1e3a); aviso.setStyle({ color: '#aa4422' }); });
+    card.on('pointerup',   () => {
       this.fecharOverlay(() => {
-        this.scene.start('StoryScene', { slot: numero });
+        this.scene.start('StoryScene', { slot: numero, modo: this.modoEscolhido });
       });
     });
 
-    itens.push(card, rotulo, nome, detalhe, aviso);
+    itens.push(card, aviso);
     return itens;
   }
 

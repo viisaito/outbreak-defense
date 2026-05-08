@@ -113,9 +113,10 @@ export class StoryScene extends Scene {
       this.indice++;
 
       if (this.indice >= SLIDES.length) {
-        // Repassa o slot escolhido na LoadScene (se veio de lá)
+        // Repassa slot e modo de jogo para CharacterScene
         const slot = this.scene.settings.data?.slot || null;
-        this.scene.start('CharacterScene', { slot });
+        const modo = this.scene.settings.data?.modo || 'normal';
+        this.scene.start('CharacterScene', { slot, modo });
       } else {
         this.mostrarSlide(this.indice);
         this.bloqueado = false;
