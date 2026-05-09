@@ -330,7 +330,7 @@ export class CharacterScene extends Scene {
     this.time.delayedCall(2000, () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.time.delayedCall(420, () => {
-        this.scene.start('GameScene');
+        this.scene.start('SquadScene');
       });
     });
   }
