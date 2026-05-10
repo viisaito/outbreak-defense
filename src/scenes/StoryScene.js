@@ -7,19 +7,19 @@ const SLIDES = [
     bgColor:  0x2d0a0a,
     tag:      'DIA 0',
     titulo:   'O COLAPSO',
-    texto:    'O vírus H-9 se espalhou por São Paulo\nem menos de 48 horas.\n\nHospitais, metrô, universidades —\ntudo tomado pelos infectados.'
+    texto:    'O vírus H-9 se espalhou por São Paulo\nem menos de 48 horas.\n\nHospitais, ruas, bairros inteiros —\ntudo tomado pelos infectados.'
   },
   {
     bgColor:  0x0a0a2d,
     tag:      'DIA 30',
     titulo:   'A CIDADE CAÍDA',
-    texto:    'São Paulo virou uma cidade fantasma.\nOs infectados dominam cada rua,\ncada corredor, cada estação.\n\nPoucos sobreviveram.'
+    texto:    'São Paulo virou uma cidade fantasma.\nOs infectados dominam cada rua,\ncada beco, cada esquina.\n\nPoucos sobreviveram.'
   },
   {
     bgColor:  0x0a2d12,
     tag:      'AGORA',
-    titulo:   'SUA MISSÃO',
-    texto:    'Você é um dos últimos defensores.\n\nConstrua barricadas, posicione seus aliados\ne impeça os zumbis de chegarem à base.\n\nSão Paulo não pode cair.'
+    titulo:   'O BAR',
+    texto:    'Você encontrou abrigo num bar abandonado\nno centro da cidade.\n\nAlguns sobreviventes se juntaram a você.\nÉ daqui que vocês vão defender São Paulo.'
   }
 ];
 
@@ -97,7 +97,7 @@ export class StoryScene extends Scene {
 
     // Último slide: muda instrução
     if (i === SLIDES.length - 1) {
-      this.textoAvanco.setText('clique para criar seu personagem');
+      this.textoAvanco.setText('clique para criar seu sobrevivente');
     } else {
       this.textoAvanco.setText('clique para continuar');
     }

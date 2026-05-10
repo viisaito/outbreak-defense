@@ -5,21 +5,11 @@ const SAVE_KEYS = [
   'outbreak-defense-save-2'
 ];
 
-const CABELOS = [
-  { label: 'Preto',    cor: 0x111111 },
-  { label: 'Castanho', cor: 0x5c3317 },
-  { label: 'Loiro',    cor: 0xf5d76e },
-  { label: 'Ruivo',    cor: 0xc0392b },
-  { label: 'Branco',   cor: 0xeeeeee }
-];
-
-const ROUPAS = [
-  { label: 'Verde',    cor: 0x27ae60 },
-  { label: 'Azul',     cor: 0x2980b9 },
-  { label: 'Vermelho', cor: 0xc0392b },
-  { label: 'Laranja',  cor: 0xe67e22 },
-  { label: 'Roxo',     cor: 0x8e44ad }
-];
+const PERSONAGENS_INFO = {
+  vini:   { nome: 'Vini',   cor: 0x2980b9 },
+  helena: { nome: 'Helena', cor: 0x8e44ad },
+  daniel: { nome: 'Daniel', cor: 0xe67e22 }
+};
 
 export class LoadScene extends Scene {
   constructor() { super('LoadScene'); }
@@ -31,8 +21,7 @@ export class LoadScene extends Scene {
       fontSize: '20px', color: '#3dff6e', letterSpacing: 4
     }).setOrigin(0.5);
 
-    // Renderiza os dois slots
-    const posY = [130, 280]; // y central de cada card
+    const posY = [138, 288];
     SAVE_KEYS.forEach((key, i) => {
       const raw  = localStorage.getItem(key);
       const save = raw ? JSON.parse(raw) : null;
@@ -40,7 +29,7 @@ export class LoadScene extends Scene {
     });
 
     // Botão VOLTAR
-    const voltar = this.add.text(60, 430, '← VOLTAR', {
+    const voltar = this.add.text(60, 432, '← VOLTAR', {
       fontSize: '13px', color: '#555577'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -50,58 +39,73 @@ export class LoadScene extends Scene {
   }
 
   criarSlot(numero, cy, save) {
-    const x     = 400;
-    const label = 'SAVE ' + numero;
-
     if (save) {
-      this.criarSlotPreenchido(x, cy, numero, label, save);
+      this.criarSlotPreenchido(numero, cy, save);
     } else {
-      this.criarSlotVazio(x, cy, numero, label);
+      this.criarSlotVazio(numero, cy);
     }
   }
 
-  // ── Slot com personagem salvo ──────────────────────────────
-  criarSlotPreenchido(x, cy, numero, label, save) {
-    const cabelo = CABELOS[save.cabeloIndex] || CABELOS[0];
-    const roupa  = ROUPAS[save.roupaIndex]   || ROUPAS[0];
-
-    const card = this.add.rectangle(x, cy, 580, 108, 0x1e1e3a)
+  // ── Slot com save ──────────────────────────────────────────
+  criarSlotPreenchido(numero, cy, save) {
+    const card = this.add.rectangle(400, cy, 680, 112, 0x1e1e3a)
       .setStrokeStyle(1, 0x333355)
       .setInteractive({ useHandCursor: true });
 
-    // Rótulo do slot
-    this.add.text(x - 278, cy - 44, label, {
+    // Rótulo
+    this.add.text(68, cy - 40, 'SLOT ' + numero, {
       fontSize: '10px', color: '#3dff6e', letterSpacing: 3
     });
 
-    // Mini preview do personagem
-    const px = x - 230;
-    this.add.circle(px, cy - 10, 20, cabelo.cor);
-    this.add.rectangle(px, cy + 26, save.genero === 'masc' ? 34 : 28, 56, roupa.cor);
-    this.add.rectangle(px - 20, cy + 22, 10, 38, roupa.cor);
-    this.add.rectangle(px + 20, cy + 22, 10, 38, roupa.cor);
-
-    // Informações
-    this.add.text(x - 196, cy - 30, save.nome, {
-      fontSize: '18px', color: '#ffffff', fontStyle: 'bold'
+    // Mini retratos dos aliados
+    const personagens = save.aliados || save.personagens || [];
+    personagens.forEach((id, i) => {
+      const info = PERSONAGENS_INFO[id];
+      if (!info) return;
+      const px = 88 + i * 52;
+      this.add.circle(px, cy - 4, 18, info.cor);
+      this.add.text(px, cy - 4, info.nome[0], {
+        fontSize: '14px', color: '#ffffff', fontStyle: 'bold'
+      }).setOrigin(0.5);
     });
 
-    this.add.text(x - 196, cy - 6, (save.genero === 'masc' ? 'Masculino' : 'Feminino') +
-      '   Cabelo: ' + cabelo.label + '   Roupa: ' + roupa.label, {
-      fontSize: '11px', color: '#666688'
+    // Nome do personagem customizado
+    this.add.text(220, cy - 26, save.nome || 'Sobrevivente', {
+      fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
     });
 
-    this.add.text(x - 196, cy + 16, '💾  Salvo em ' + save.savedAt, {
+    // Aliados
+    const nomes = personagens
+      .map(id => PERSONAGENS_INFO[id]?.nome || id)
+      .join(', ');
+
+    this.add.text(220, cy - 2, 'Aliados: ' + nomes, {
+      fontSize: '12px', color: '#aaaacc'
+    });
+
+    // Data de save
+    this.add.text(220, cy + 20, '💾  Salvo em ' + (save.savedAt || '—'), {
       fontSize: '11px', color: '#555577'
     });
 
-    // Hover e clique no card
+    // Dificuldade (canto direito, alinhado verticalmente ao centro)
+    const modo     = save.modo || 'normal';
+    const corModo  = modo === 'dificil' ? '#ff6644' : '#3dff6e';
+    const labelModo = modo === 'dificil' ? '⚠ DIFÍCIL' : 'NORMAL';
+
+    this.add.rectangle(618, cy - 8, 96, 26, modo === 'dificil' ? 0x3a1a1a : 0x1a2e1a)
+      .setStrokeStyle(1, modo === 'dificil' ? 0x5a2a2a : 0x2a5a2a);
+    this.add.text(618, cy - 8, labelModo, {
+      fontSize: '11px', color: corModo, letterSpacing: 1
+    }).setOrigin(0.5);
+
+    // Hover e clique
     card.on('pointerover', () => card.setStrokeStyle(1, 0x3dff6e));
     card.on('pointerout',  () => card.setStrokeStyle(1, 0x333355));
     card.on('pointerup',   () => this.carregarSave(save));
 
-    // Botão apagar (pequeno, canto direito)
-    const apagar = this.add.text(x + 268, cy + 36, 'APAGAR', {
+    // Botão apagar
+    const apagar = this.add.text(716, cy + 40, 'APAGAR', {
       fontSize: '10px', color: '#553333', letterSpacing: 1
     }).setOrigin(1).setInteractive({ useHandCursor: true });
 
@@ -111,51 +115,38 @@ export class LoadScene extends Scene {
   }
 
   // ── Slot vazio ─────────────────────────────────────────────
-  criarSlotVazio(x, cy, numero, label) {
-    const card = this.add.rectangle(x, cy, 580, 108, 0x16162a)
+  criarSlotVazio(numero, cy) {
+    const card = this.add.rectangle(400, cy, 680, 112, 0x16162a)
       .setStrokeStyle(1, 0x2a2a4a)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(x - 278, cy - 44, label, {
+    this.add.text(68, cy - 40, 'SLOT ' + numero, {
       fontSize: '10px', color: '#444466', letterSpacing: 3
     });
 
-    this.add.text(x, cy - 12, 'SLOT VAZIO', {
+    this.add.text(400, cy - 12, 'SLOT VAZIO', {
       fontSize: '16px', color: '#333355', letterSpacing: 4
     }).setOrigin(0.5);
 
-    this.add.text(x, cy + 16, 'Clique para iniciar nova partida neste slot', {
+    this.add.text(400, cy + 16, 'Clique para iniciar nova partida neste slot', {
       fontSize: '12px', color: '#2a2a44'
     }).setOrigin(0.5);
 
-    card.on('pointerover', () => {
-      card.setStrokeStyle(1, 0x3dff6e);
-      card.setFillStyle(0x1a1a30);
-    });
-    card.on('pointerout', () => {
-      card.setStrokeStyle(1, 0x2a2a4a);
-      card.setFillStyle(0x16162a);
-    });
-    card.on('pointerup', () => {
-      // Passa o slot para StoryScene → CharacterScene salva no slot certo
-      this.scene.start('StoryScene', { slot: numero });
-    });
+    card.on('pointerover', () => { card.setStrokeStyle(1, 0x3dff6e); card.setFillStyle(0x1a1a30); });
+    card.on('pointerout',  () => { card.setStrokeStyle(1, 0x2a2a4a); card.setFillStyle(0x16162a); });
+    card.on('pointerup',   () => this.scene.start('StoryScene', { slot: numero }));
   }
 
-  // ── Carregar save existente ────────────────────────────────
+  // ── Carregar ───────────────────────────────────────────────
   carregarSave(save) {
-    this.registry.set('personagem', {
-      nome:   save.nome,
-      genero: save.genero,
-      cabelo: CABELOS[save.cabeloIndex] || CABELOS[0],
-      roupa:  ROUPAS[save.roupaIndex]   || ROUPAS[0]
-    });
+    this.registry.set('personagens', save.personagens || []);
+    this.registry.set('modoJogo',    save.modo || 'normal');
 
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.time.delayedCall(310, () => this.scene.start('GameScene'));
   }
 
-  // ── Apagar save com confirmação dupla ──────────────────────
+  // ── Apagar com confirmação dupla ───────────────────────────
   confirmarApagar(numero, btnRef) {
     const key = '_confirmando' + numero;
     if (this[key]) {
@@ -165,7 +156,6 @@ export class LoadScene extends Scene {
     }
     this[key] = true;
     btnRef.setText('CONFIRMAR?').setStyle({ color: '#ff4444' });
-    // Cancela após 3s sem segundo clique
     this.time.delayedCall(3000, () => {
       this[key] = false;
       if (btnRef.active) btnRef.setText('APAGAR').setStyle({ color: '#553333' });
