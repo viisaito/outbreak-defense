@@ -31,7 +31,7 @@ export class GameScene extends Scene {
     this.tempoPreparacao   = 15;
     this.ondaIniciada      = false;
     this.ondaConcluida     = false;
-    this.attackRange       = 200;
+    this.attackRange       = 120;
     this.audioContext      = null;
 
     // ── Aliados do esquadrão (vindos da SquadScene) ────────────
@@ -464,9 +464,9 @@ export class GameScene extends Scene {
 
     let hp, velocidade, cor, larg, alt, dano;
     if (tipo === 'zumbi') {
-      hp = 50; velocidade = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 20;
+      hp = 150; velocidade = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 30;
     } else {
-      hp = 30; velocidade = 150; cor = 0x880000; larg = 24; alt = 24; dano = 10;
+      hp = 80; velocidade = 150; cor = 0x880000; larg = 24; alt = 24; dano = 15;
     }
 
     const z = this.add.rectangle(50, PhaserMath.Between(50, 400), larg, alt, cor);

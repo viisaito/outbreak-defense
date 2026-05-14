@@ -33,7 +33,7 @@ const PERSONAGENS = [
     passiva: 'Arremesso\nde chave de rosca',
     cor: 0xffaa33,
     bloqueado: false,
-    bioma: 1
+    bioma: 4
   },
   {
     id: 'filipa',
@@ -42,7 +42,7 @@ const PERSONAGENS = [
     passiva: 'Habilita terminais\ne portas',
     cor: 0x9966ff,
     bloqueado: true,
-    bioma: 2
+    bioma: 3
   },
   {
     id: 'ana',
@@ -60,7 +60,7 @@ const PERSONAGENS = [
     passiva: 'Cura à\ndistância',
     cor: 0x33ffcc,
     bloqueado: true,
-    bioma: 3
+    bioma: 5
   },
   {
     id: 'bruno',
@@ -69,7 +69,7 @@ const PERSONAGENS = [
     passiva: '15% bônus\nde ataque',
     cor: 0x8899ff,
     bloqueado: true,
-    bioma: 3
+    bioma: 2
   },
   {
     id: 'marco',
