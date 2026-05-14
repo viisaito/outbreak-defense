@@ -2,10 +2,13 @@ import { Scene, Math as PhaserMath } from 'phaser';
 
 // ── Config de cada personagem jogável ────────────────────────────
 const PERSONAGENS_CONFIG = {
-  vini:   { nome: 'Vini',   cor: 0x3399ff, custo: 0,  dano: 26, hp: 80  }, // passiva: +30% dano
-  helena: { nome: 'Helena', cor: 0xff66aa, custo: 20, dano: 15, hp: 100 }, // passiva: mais HP
-  daniel: { nome: 'Daniel', cor: 0xffaa33, custo: 20, dano: 18, hp: 90  }  // passiva: dano médio
+  vini:   { nome: 'Vini',   cor: 0x3399ff, custo: 20,  dano: 26, hp: 110  }, // passiva: +20% dano
+  helena: { nome: 'Helena', cor: 0xff66aa, custo: 20, dano: 15, hp: 100 }, // passiva: mais 20% HP
+  daniel: { nome: 'Daniel', cor: 0xffaa33, custo: 20, dano: 19, hp: 90  }  // passiva: 20% chance de desviar do ataque
 };
+
+// ── Cores das roupas para o avatar ──────────────────────────────
+const CORES_ROUPAS = [0x27ae60, 0x2980b9, 0xc0392b, 0xe67e22, 0x8e44ad];
 
 export class GameScene extends Scene {
   constructor() { super('GameScene'); }
@@ -31,12 +34,15 @@ export class GameScene extends Scene {
     this.tempoPreparacao   = 15;
     this.ondaIniciada      = false;
     this.ondaConcluida     = false;
-    this.attackRange       = 120;
+    this.attackRange       = 140;
     this.audioContext      = null;
 
     // ── Aliados do esquadrão (vindos da SquadScene) ────────────
     this.aliados           = this.registry.get('aliados') || ['vini'];
     this.aliadoSelecionado = this.aliados[0];
+
+    // ── Personagem customizado (avatar principal) ──────────────
+    this.personagem        = this.registry.get('personagem') || { nome: 'Sobrevivente', genero: 'masc', cabeloIndex: 0, roupaIndex: 0 };
 
     // ── Fundo ──────────────────────────────────────────────────
     this.add.rectangle(400, 225, 800, 450, 0x1a1a2e);
@@ -49,9 +55,10 @@ export class GameScene extends Scene {
     this.slotSelecionado = null;
     this.slots = [];
     const posicoes = [
-      { x: 180, y: 130 },
-      { x: 360, y: 280 },
-      { x: 530, y: 160 }
+      { x: 750, y: 90,  base: true },
+      { x: 190, y: 140 },
+      { x: 360, y: 310 },
+      { x: 530, y: 180 }
     ];
     posicoes.forEach((pos, i) => this._criarSlot(pos, i));
 
@@ -60,6 +67,7 @@ export class GameScene extends Scene {
 
     // ── Ícones de aliados (rodapé) ──────────────────────────────
     this._criarIconesAliados();
+    this._posicionarAvatarInicial();
 
     this.inimigos = [];
     this.atualizarCorDaBase();
@@ -70,6 +78,14 @@ export class GameScene extends Scene {
       callbackScope: this,
       repeat: this.tempoPreparacao - 1
     });
+
+    // Timer para habilidades passivas (a cada 20 segundos)
+    this.timerHabilidades = this.time.addEvent({
+      delay: 20000,
+      callback: this._habilidadesPassivas,
+      callbackScope: this,
+      loop: true
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -79,7 +95,8 @@ export class GameScene extends Scene {
   _criarSlot(pos, i) {
     const slot = this.add.rectangle(pos.x, pos.y, 52, 52, 0x444466)
       .setInteractive()
-      .setStrokeStyle(2, 0x8888aa);
+      .setStrokeStyle(2, 0x8888aa)
+      .setDepth(1);
 
     slot.personagem   = null;
     slot.rangeCircle  = null;
@@ -90,9 +107,10 @@ export class GameScene extends Scene {
     slot.hpBarFundo   = null;
     slot.hpBar        = null;
     slot.personagemId = null;
+    slot.isBaseSlot    = !!pos.base;
 
     // Número do slot (acima de tudo)
-    this.add.text(pos.x, pos.y, (i + 1).toString(), {
+    this.add.text(pos.x, pos.y, slot.isBaseSlot ? 'B' : (i + 1).toString(), {
       fontSize: '16px', color: '#aaaacc'
     }).setOrigin(0.5).setDepth(5);
 
@@ -105,18 +123,37 @@ export class GameScene extends Scene {
         slot.setFillStyle(slot.personagem ? 0x223388 : 0x444466);
     });
     slot.on('pointerdown', () => {
-      if (slot.personagem) return;
       if (this.slotSelecionado === slot) {
-        slot.setFillStyle(0x444466);
+        slot.setFillStyle(slot.personagem ? 0x223388 : 0x444466);
         this.slotSelecionado = null;
-      } else {
-        if (this.slotSelecionado) this.slotSelecionado.setFillStyle(0x444466);
-        slot.setFillStyle(0x00cc66);
-        this.slotSelecionado = slot;
-        const cfg = PERSONAGENS_CONFIG[this.aliadoSelecionado];
+        this.textoSlot.setText(this.aliadoSelecionado
+          ? (this.aliadoSelecionado === 'avatar' ? this.personagem.nome : (PERSONAGENS_CONFIG[this.aliadoSelecionado]?.nome || 'Aliado')) +
+            ' selecionado — clique num slot vazio para posicionar'
+          : 'Seleção cancelada. Clique num aliado para reposicionar um personagem.'
+        );
+        return;
+      }
+
+      if (this.slotSelecionado) {
+        this.slotSelecionado.setFillStyle(this.slotSelecionado.personagem ? 0x223388 : 0x444466);
+      }
+
+      this.slotSelecionado = slot;
+      slot.setFillStyle(0x00cc66);
+
+      if (slot.personagem) {
+        this.aliadoSelecionado = slot.personagemId;
+        this._atualizarBordasAliados();
+        const personagemNome = slot.personagemId === 'avatar' ? this.personagem.nome : (PERSONAGENS_CONFIG[slot.personagemId]?.nome || 'Aliado');
         this.textoSlot.setText(
           'Slot ' + (this.slots.indexOf(slot) + 1) +
-          ' selecionado — clique em ' + (cfg?.nome || 'aliado') + ' para posicionar'
+          ' selecionado — clique num slot vazio e depois em ' + personagemNome + ' para reposicionar'
+        );
+      } else {
+        const cfg = this.aliadoSelecionado === 'avatar' ? { nome: this.personagem.nome } : PERSONAGENS_CONFIG[this.aliadoSelecionado];
+        this.textoSlot.setText(
+          'Slot ' + (this.slots.indexOf(slot) + 1) +
+          ' selecionado — ' + (cfg ? cfg.nome + ' está pronto para posicionar' : 'selecione um aliado')
         );
       }
     });
@@ -175,7 +212,7 @@ export class GameScene extends Scene {
       this.add.text(cx - 12, cy - 9, cfg.nome, {
         fontSize: '12px', color: '#ffffff', fontStyle: 'bold'
       }).setDepth(11);
-      this.add.text(cx - 12, cy + 5, i === 0 ? 'Grátis' : cfg.custo + ' SP', {
+      this.add.text(cx - 12, cy + 5, cfg.custo + ' SP', {
         fontSize: '10px', color: '#aaaacc'
       }).setDepth(11);
 
@@ -189,6 +226,17 @@ export class GameScene extends Scene {
         if (this.aliadoSelecionado !== id) bg.setFillStyle(0x1a1a2e);
       });
       bg.on('pointerdown', () => {
+        if (this.aliadoSelecionado === id) {
+          this.aliadoSelecionado = null;
+          this._atualizarBordasAliados();
+          if (this.slotSelecionado) {
+            this.slotSelecionado.setFillStyle(this.slotSelecionado.personagem ? 0x223388 : 0x444466);
+            this.slotSelecionado = null;
+          }
+          this.textoSlot.setText('Seleção cancelada. Clique num aliado para reposicionar um personagem.');
+          return;
+        }
+
         this.aliadoSelecionado = id;
         this._atualizarBordasAliados();
         if (this.slotSelecionado) {
@@ -211,6 +259,22 @@ export class GameScene extends Scene {
     });
   }
 
+  _posicionarAvatarInicial() {
+    if (!this.personagem || this.slots.length === 0) return;
+    const cfg = {
+      nome: this.personagem.nome,
+      cor: CORES_ROUPAS[this.personagem.roupaIndex] || 0x888888,
+      custo: 20,
+      dano: 20,
+      hp: 100
+    };
+    const targetSlot = this.slots[0]; // Slot da base é o primeiro
+    if (targetSlot.personagem) return;
+    this._posicionarNoSlot(targetSlot, 'avatar', cfg);
+    const slotLabel = 'slot B';
+    this.textoSlot.setText(cfg.nome + ' posicionado no ' + slotLabel + ' para a 1ª onda.');
+  }
+
   // ════════════════════════════════════════════════════════════
   //  POSICIONAMENTO DE PERSONAGEM
   // ════════════════════════════════════════════════════════════
@@ -227,10 +291,25 @@ export class GameScene extends Scene {
     }
 
     const id  = this.aliadoSelecionado;
-    const cfg = PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 20, hp: 80 };
+    let cfg;
+    if (id === 'avatar') {
+      cfg = {
+        nome: this.personagem.nome,
+        cor: CORES_ROUPAS[this.personagem.roupaIndex] || 0x888888,
+        custo: 20,
+        dano: 20,
+        hp: 100
+      };
+    } else {
+      cfg = PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 20, hp: 80 };
+    }
 
     // Já posicionado em outro slot? → reposicionamento (custa 20 SP)
     const slotAtual = this.slots.find(s => s.personagemId === id && s.personagem);
+    if (slotAtual === slot) {
+      this.textoSlot.setText(cfg.nome + ' já está neste slot. Escolha outro slot ou cancele.');
+      return;
+    }
     if (slotAtual) {
       if (this.sp < 20) {
         this.textoSlot.setText('SP insuficiente! Precisa de 20 SP para mover ' + cfg.nome + '.');
@@ -256,15 +335,24 @@ export class GameScene extends Scene {
     const hpBar      = this.add.rectangle(slot.x - 22, slot.y - 34, 44, 6, cfg.cor)
       .setOrigin(0, 0.5).setDepth(3);
 
+    // Círculo de cura para Helena
+    let healCircle = null;
+    if (id === 'helena') {
+      healCircle = this.add.circle(slot.x, slot.y, 260, 0x00ff88, 0.4).setDepth(0.5)
+        .setStrokeStyle(3, 0x00ff88, 1);
+    }
+
     slot.personagem   = personagem;
     slot.rangeCircle  = rangeCircle;
     slot.aimIcon      = aimIcon;
+    slot.healCircle   = healCircle;
     slot.personagemId = id;
     slot.hp           = cfg.hp;
     slot.maxHp        = cfg.hp;
     slot.hpBarFundo   = hpBarFundo;
     slot.hpBar        = hpBar;
     slot.cooldown     = 0;
+    slot.cfg          = cfg; // Salvar cfg para uso posterior
     slot.setFillStyle(0x223388);
     slot.setStrokeStyle(2, cfg.cor);
 
@@ -275,12 +363,13 @@ export class GameScene extends Scene {
     if (slot.personagem)  { slot.personagem.destroy();  slot.personagem  = null; }
     if (slot.rangeCircle) { slot.rangeCircle.destroy(); slot.rangeCircle = null; }
     if (slot.aimIcon)     { slot.aimIcon.destroy();     slot.aimIcon     = null; }
+    if (slot.healCircle)  { slot.healCircle.destroy();  slot.healCircle  = null; }
     if (slot.hpBarFundo)  { slot.hpBarFundo.destroy();  slot.hpBarFundo  = null; }
     if (slot.hpBar)       { slot.hpBar.destroy();       slot.hpBar       = null; }
     slot.hp           = 0;
     slot.maxHp        = 0;
     slot.personagemId = null;
-    slot.cooldown     = 0;
+    slot.cooldown     = 10;
     slot.setFillStyle(0x444466);
     slot.setStrokeStyle(2, 0x8888aa);
   }
@@ -339,7 +428,7 @@ export class GameScene extends Scene {
 
           // Flash na torre
           if (slot.personagem && slot.personagem.active) {
-            const cfg = PERSONAGENS_CONFIG[slot.personagemId] || { cor: 0x888888 };
+            const cfg = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { cor: 0x888888 };
             slot.personagem.setFillStyle(0xffffff);
             this.time.delayedCall(80, () => {
               if (slot.personagem && slot.personagem.active)
@@ -391,7 +480,7 @@ export class GameScene extends Scene {
     });
 
     this.cameras.main.shake(120, 0.007);
-    const cfg = PERSONAGENS_CONFIG[slot.personagemId] || { nome: 'Aliado' };
+    const cfg = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { nome: 'Aliado' };
     this.textoSlot.setText(cfg.nome + ' foi eliminado pelos infectados!');
 
     // Retoma o zumbi imediatamente
@@ -412,7 +501,7 @@ export class GameScene extends Scene {
       slot.cooldown = Math.max(0, slot.cooldown - delta / 1000);
       if (slot.cooldown > 0) continue;
 
-      const cfg  = PERSONAGENS_CONFIG[slot.personagemId] || { dano: 20 };
+      const cfg  = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { dano: 20 };
 
       for (const z of this.inimigos) {
         if (!z || !z.active) continue;
@@ -464,9 +553,9 @@ export class GameScene extends Scene {
 
     let hp, velocidade, cor, larg, alt, dano;
     if (tipo === 'zumbi') {
-      hp = 150; velocidade = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 30;
+      hp = 100; velocidade = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 30;
     } else {
-      hp = 80; velocidade = 150; cor = 0x880000; larg = 24; alt = 24; dano = 15;
+      hp = 60; velocidade = 150; cor = 0x880000; larg = 24; alt = 24; dano = 15;
     }
 
     const z = this.add.rectangle(50, PhaserMath.Between(50, 400), larg, alt, cor);
@@ -573,6 +662,29 @@ export class GameScene extends Scene {
       this.scene.start('VictoryScene', { danados: this.inimigosDanaram });
     } else {
       this.iniciarProximaOnda();
+    }
+  }
+
+  // ========================================================================
+  //  HABILIDADES PASSIVAS
+  // ========================================================================
+
+  _habilidadesPassivas() {
+    // Habilidade de Helena: cura aliados em raio de 200px por 10 HP
+    const slotHelena = this.slots.find(s => s.personagemId === 'helena' && s.hp > 0);
+    if (!slotHelena) return;
+
+    for (const slot of this.slots) {
+      if (!slot.personagem || slot.hp <= 0 || slot === slotHelena) continue;
+      const dist = PhaserMath.Distance.Between(slotHelena.x, slotHelena.y, slot.x, slot.y);
+      if (dist <= 200) {
+        const cura = Math.min(10, slot.maxHp - slot.hp);
+        if (cura > 0) {
+          slot.hp += cura;
+          this._atualizarHPTorre(slot);
+          this._floatingText(slot.x, slot.y, '+' + cura + ' HP', '#00ff00');
+        }
+      }
     }
   }
 
