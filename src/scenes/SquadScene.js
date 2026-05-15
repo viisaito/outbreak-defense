@@ -5,106 +5,79 @@ const SAVE_KEYS = [
   'outbreak-defense-save-2'
 ];
 
+// Mapeamento de cores de roupa (mesmo índice de CharacterScene)
+const ROUPAS_CORES = [0x27ae60, 0x2980b9, 0xc0392b, 0xe67e22, 0x8e44ad];
+
 // ── Personagens do GDD v0.2 ────────────────────────────────────
-// Bioma 01: Vini, Helena e Daniel desbloqueados por padrão
 const PERSONAGENS = [
   {
-    id: 'vini',
-    nome: 'VINI CARVALHO',
-    funcao: 'Policial S.P.D.',
-    passiva: '+X% dano com\narmas de fogo',
-    cor: 0x3399ff,
-    bloqueado: false,
-    bioma: 1
+    id: 'vini',   nome: 'VINI CARVALHO',   funcao: 'Policial S.P.D.',
+    passiva: '+20% de dano com a\narma principal (.45)',
+    cor: 0x3399ff, bloqueado: false, bioma: 1, hp: 110, dano: 8
   },
   {
-    id: 'helena',
-    nome: 'HELENA MARIA',
-    funcao: 'Garçonete',
-    passiva: 'Cura aliados\nem raio',
-    cor: 0xff66aa,
-    bloqueado: false,
-    bioma: 1
+    id: 'helena', nome: 'HELENA MARIA',    funcao: 'Garçonete',
+    passiva: 'Cura aliados em raio\n(+10HP a cada 20s)',
+    cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 80,  dano: 4
   },
   {
-    id: 'daniel',
-    nome: 'DANIEL FERNANDES',
-    funcao: 'Encanador',
-    passiva: 'Arremesso\nde chave de rosca',
-    cor: 0xffaa33,
-    bloqueado: false,
-    bioma: 4
+    id: 'daniel', nome: 'DANIEL FERNANDES', funcao: 'Mecânico',
+    passiva: 'Arremessa chave de rosca\n+ conserta armas e base',
+    cor: 0xffaa33, bloqueado: false, bioma: 1, hp: 95,  dano: 7
   },
   {
-    id: 'filipa',
-    nome: 'FILIPA SAITO',
-    funcao: 'Univ. de TI',
-    passiva: 'Habilita terminais\ne portas',
-    cor: 0x9966ff,
-    bloqueado: true,
-    bioma: 3
+    id: 'filipa', nome: 'FILIPA SAITO',    funcao: 'Hacker TI',
+    passiva: 'Habilita terminais\ne portas eletrônicas',
+    cor: 0x9966ff, bloqueado: true,  bioma: 2, hp: 75,  dano: 4
   },
   {
-    id: 'ana',
-    nome: 'ANA SILVA',
-    funcao: 'Jornalista',
-    passiva: 'Itens extras\nem cômodos',
-    cor: 0xffcc33,
-    bloqueado: true,
-    bioma: 2
+    id: 'ana',    nome: 'ANA SILVA',       funcao: 'Jornalista',
+    passiva: 'Itens extras em\ncômodos bloqueados',
+    cor: 0xffcc33, bloqueado: true,  bioma: 2, hp: 70,  dano: 3
   },
   {
-    id: 'nadia',
-    nome: 'DRA. NÁDIA',
-    funcao: 'Cirurgiã',
-    passiva: 'Cura à\ndistância',
-    cor: 0x33ffcc,
-    bloqueado: true,
-    bioma: 5
+    id: 'nadia',  nome: 'DRA. NÁDIA',      funcao: 'Cirurgiã',
+    passiva: 'Cada inimigo morto\nrestaura 15% do HP',
+    cor: 0x33ffcc, bloqueado: true,  bioma: 3, hp: 90,  dano: 5
   },
   {
-    id: 'bruno',
-    nome: 'BRUNO FREITAS',
-    funcao: 'Metrô SP',
-    passiva: '15% bônus\nde ataque',
-    cor: 0x8899ff,
-    bloqueado: true,
-    bioma: 2
+    id: 'bruno',  nome: 'BRUNO FREITAS',   funcao: 'Ag. do Metrô SP',
+    passiva: 'Finge de morto + Moeda:\n15% bônus de ataque crítico',
+    cor: 0x8899ff, bloqueado: true,  bioma: 3, hp: 90,  dano: 6
   },
   {
-    id: 'marco',
-    nome: 'MARCO VEIO',
-    funcao: 'Ex-combatente',
-    passiva: 'Redução de\ndano recebido',
-    cor: 0xff6633,
-    bloqueado: true,
-    bioma: 4
+    id: 'marco',  nome: 'MARCO VÉIO',      funcao: 'Ex-combatente',
+    passiva: 'Redução de 15% do\ndano recebido (tank)',
+    cor: 0xff6633, bloqueado: true,  bioma: 4, hp: 140, dano: 9
   }
 ];
 
-// Grid 4x2
-const COLS = [105, 300, 500, 695];
-const ROWS = [168, 308];
+// Grid 3×3 (posição 0 = player, 1-8 = NPCs)
+const COLS   = [140, 400, 660];
+const ROWS   = [118, 240, 362];
+const CARD_W = 175;
+const CARD_H = 92;
+const AV_R   = 16; // raio do avatar
 
-const MAX_SELECAO = 3;
+const MAX_SELECAO = 3; // max de NPCs selecionáveis (player é fixo)
 
 // ── Slides narrativos ──────────────────────────────────────────
 const NARRATIVA = [
   {
-    tag:   'MISSÃO 01',
-    texto: 'Você se refugiou num bar\nabandonado no centro de SP.\n\nOs infectados cercam\no quarteirão.'
+    tag:   'DIA 0 — O BAR',
+    texto: 'Enquanto a cidade desmorona lá fora\ne as ruas se enchem de gritos,\nvocê encontra abrigo num bar no centro.\n\nVocê não estava sozinho.'
   },
   {
-    tag:   'REFORÇO',
-    texto: 'Você transmite um sinal\nde socorro pelo rádio.\n\nSobreviventes respondem\nao chamado...'
+    tag:   'OS SOBREVIVENTES',
+    texto: 'Cada um chegou por um motivo diferente.\nNenhum escolheu estar aqui.\n\nMas agora a escolha é sua —\nquem vai ao seu lado?'
   }
 ];
 
 // ── Tooltips do tutorial ───────────────────────────────────────
 const TOOLTIPS = [
-  'Estes são os sobreviventes que podem\ndefender a posição com você.',
+  'Estes são os sobreviventes encontrados\nno bar — cada um com habilidades únicas.',
   'Os aliados bloqueados serão desbloqueados\nconforme você avança pelos biomas.',
-  'Selecione até 3 aliados disponíveis\ne clique em COMEÇAR para entrar na fase.'
+  'Passe o mouse sobre os personagens para\nver os atributos. Selecione até 3 aliados.'
 ];
 
 export class SquadScene extends Scene {
@@ -122,7 +95,7 @@ export class SquadScene extends Scene {
       roupaIndex:  d.roupaIndex  ?? 0
     };
 
-    // Seleção inicial: todos os desbloqueados pré-selecionados
+    // Seleção inicial: todos os NPCs desbloqueados pré-selecionados
     this.selecionados    = new Set(PERSONAGENS.filter(p => !p.bloqueado).map(p => p.id));
     this.fase            = 'narrativa';
     this.idxNarrativa    = 0;
@@ -134,6 +107,7 @@ export class SquadScene extends Scene {
 
     // Constrói camadas
     this._criarGrid();
+    this._criarHoverTooltip();
     this._criarNarrativa();
     this._criarTooltipUI();
     this._criarRodape();
@@ -190,19 +164,75 @@ export class SquadScene extends Scene {
   }
 
   // ═══════════════════════════════════════════════════════════
+  //  HOVER TOOLTIP (stats do personagem)
+  // ═══════════════════════════════════════════════════════════
+
+  _criarHoverTooltip() {
+    const d = 20; // depth alto para ficar sobre tudo
+    this._hvBg     = this.add.rectangle(0, 0, 178, 128, 0x060c14)
+      .setStrokeStyle(1, 0x3dff6e).setDepth(d).setVisible(false);
+    this._hvNome   = this.add.text(0, 0, '', {
+      fontSize: '10px', color: '#3dff6e', fontStyle: 'bold', letterSpacing: 1
+    }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
+    this._hvFuncao = this.add.text(0, 0, '', {
+      fontSize: '8px', color: '#7788aa'
+    }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
+    this._hvSep    = this.add.rectangle(0, 0, 150, 1, 0x1a2a3a)
+      .setDepth(d + 1).setVisible(false);
+    this._hvHp     = this.add.text(0, 0, '', {
+      fontSize: '10px', color: '#ff6666'
+    }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
+    this._hvDano   = this.add.text(0, 0, '', {
+      fontSize: '10px', color: '#ffaa44'
+    }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
+    this._hvPassiva = this.add.text(0, 0, '', {
+      fontSize: '8px', color: '#aaaacc', align: 'center',
+      lineSpacing: 4, wordWrap: { width: 158 }
+    }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
+
+    this._hvObjs = [this._hvBg, this._hvNome, this._hvFuncao,
+                    this._hvSep, this._hvHp, this._hvDano, this._hvPassiva];
+  }
+
+  _mostrarHoverTooltip(p, cx, cy) {
+    const TW = 178, TH = 128;
+    // Posiciona à direita do card; se não couber, vai à esquerda
+    let tx = cx + CARD_W / 2 + 6 + TW / 2;
+    if (tx + TW / 2 > 796) tx = cx - CARD_W / 2 - 6 - TW / 2;
+    // Clamp vertical
+    let ty = cy;
+    if (ty - TH / 2 < 4)   ty = TH / 2 + 4;
+    if (ty + TH / 2 > 446) ty = 446 - TH / 2;
+
+    this._hvBg.setPosition(tx, ty);
+    this._hvNome.setPosition(tx, ty - 48).setText(p.nome);
+    this._hvFuncao.setPosition(tx, ty - 34).setText(p.funcao || '');
+    this._hvSep.setPosition(tx, ty - 22);
+    this._hvHp.setPosition(tx, ty - 10).setText('❤  HP: ' + (p.hp ?? '—'));
+    this._hvDano.setPosition(tx, ty + 6).setText('⚔  Dano: ' + (p.dano ?? '—'));
+    this._hvPassiva.setPosition(tx, ty + 34).setText(p.passiva || '');
+
+    this._hvObjs.forEach(o => o.setVisible(true));
+  }
+
+  _esconderHoverTooltip() {
+    this._hvObjs?.forEach(o => o.setVisible(false));
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  GRID DE PERSONAGENS
   // ═══════════════════════════════════════════════════════════
 
   _criarGrid() {
-    this._gridObjs  = [];
-    this._cardRefs  = [];
+    this._gridObjs = [];
+    this._cardRefs = [];
 
-    // Cabeçalho do grid
+    // Cabeçalho
     this._gridTitulo = this.add.text(400, 22, 'ESCOLHA SEU ESQUADRÃO', {
       fontSize: '16px', color: '#3dff6e', letterSpacing: 3
     }).setOrigin(0.5).setDepth(2).setAlpha(0);
 
-    this._gridSub = this.add.text(400, 42, 'BIOMA 01  —  ESTAÇÃO DE METRÔ', {
+    this._gridSub = this.add.text(400, 42, 'BIOMA 01  —  BAR CENTRAL  —  SÃO PAULO', {
       fontSize: '10px', color: '#333344', letterSpacing: 2
     }).setOrigin(0.5).setDepth(2).setAlpha(0);
 
@@ -212,12 +242,26 @@ export class SquadScene extends Scene {
 
     this._gridObjs.push(this._gridTitulo, this._gridSub, this._gridContador);
 
-    // Cards
-    PERSONAGENS.forEach((p, i) => {
-      const col = i % 4;
-      const row = Math.floor(i / 4);
-      const cx  = COLS[col];
-      const cy  = ROWS[row];
+    // Personagem criado pelo jogador (posição 0 do grid)
+    const roupaCor = ROUPAS_CORES[this.dadosPersonagem.roupaIndex] ?? 0x3dff6e;
+    const jogador = {
+      id:       'player',
+      nome:     this.dadosPersonagem.nome,
+      funcao:   'Sobrevivente',
+      passiva:  'Boost de dano em raio\npara aliados próximos.\nEquipa pistolas e faca de combate.',
+      cor:      roupaCor,
+      bloqueado: false,
+      bioma:    1,
+      hp:       100,
+      dano:     6,
+      isPlayer: true
+    };
+
+    // Grid 3×3: slot 0 = jogador, slots 1-8 = NPCs
+    const allChars = [jogador, ...PERSONAGENS];
+    allChars.forEach((p, i) => {
+      const cx = COLS[i % 3];
+      const cy = ROWS[Math.floor(i / 3)];
       this._criarCard(p, cx, cy);
     });
 
@@ -226,83 +270,91 @@ export class SquadScene extends Scene {
 
   _criarCard(p, cx, cy) {
     const bl       = p.bloqueado;
-    const corFundo = bl ? 0x111118 : 0x101d30;
-    const corBorda = bl ? 0x252530 : p.cor;
+    const isPlayer = !!p.isPlayer;
+
+    const corFundo = isPlayer ? 0x0a1a0a : (bl ? 0x111118 : 0x101d30);
+    const corBorda = isPlayer ? 0x3dff6e : (bl ? 0x252530 : p.cor);
+    const bordaW   = (isPlayer || !bl) ? 2 : 1;
 
     // Fundo do card
-    const card = this.add.rectangle(cx, cy, 170, 118, corFundo)
-      .setStrokeStyle(bl ? 1 : 2, corBorda)
+    const card = this.add.rectangle(cx, cy, CARD_W, CARD_H, corFundo)
+      .setStrokeStyle(bordaW, corBorda)
       .setDepth(2).setAlpha(0);
     this._gridObjs.push(card);
 
     // Avatar
-    const avatar = this.add.circle(cx, cy - 26, 20, bl ? 0x222230 : p.cor)
+    const avatar = this.add.circle(cx, cy - 20, AV_R, bl ? 0x222230 : p.cor)
       .setDepth(3).setAlpha(0);
     this._gridObjs.push(avatar);
 
-    // Checkmark de seleção (só para desbloqueados)
-    let check = null;
-    if (!bl) {
-      check = this.add.text(cx + 72, cy - 48, '✔', {
-        fontSize: '11px', color: '#3dff6e'
-      }).setOrigin(0.5).setDepth(4).setAlpha(0).setVisible(false);
-      this._gridObjs.push(check);
-    }
-
-    // Cadeado ou tag DISPONÍVEL
-    if (bl) {
-      const lock = this.add.text(cx, cy - 26, '🔒', {
-        fontSize: '13px', color: '#333344'
+    // Tag superior
+    if (isPlayer) {
+      const youTag = this.add.text(cx, cy - 39, 'VOCÊ', {
+        fontSize: '7px', color: '#3dff6e', letterSpacing: 3
+      }).setOrigin(0.5).setDepth(4).setAlpha(0);
+      this._gridObjs.push(youTag);
+    } else if (bl) {
+      const lock = this.add.text(cx, cy - 20, '🔒', {
+        fontSize: '12px', color: '#333344'
       }).setOrigin(0.5).setDepth(4).setAlpha(0);
       this._gridObjs.push(lock);
     } else {
-      const tag = this.add.text(cx, cy - 46, 'DISPONÍVEL', {
+      const tag = this.add.text(cx, cy - 39, 'DISPONÍVEL', {
         fontSize: '7px', color: '#3dff6e', letterSpacing: 1
       }).setOrigin(0.5).setDepth(4).setAlpha(0);
       this._gridObjs.push(tag);
     }
 
-    // Nome (só primeiro)
+    // Checkmark (NPCs desbloqueados)
+    let check = null;
+    if (!bl && !isPlayer) {
+      check = this.add.text(cx + CARD_W / 2 - 10, cy - CARD_H / 2 + 8, '✔', {
+        fontSize: '11px', color: '#3dff6e'
+      }).setOrigin(0.5).setDepth(4).setAlpha(0).setVisible(false);
+      this._gridObjs.push(check);
+    }
+
+    // Nome
     const primeiroNome = p.nome.split(' ')[0];
     const nomeObj = this.add.text(cx, cy + 4, primeiroNome, {
-      fontSize: bl ? '11px' : '13px',
-      color: bl ? '#2a2a3a' : '#ffffff',
+      fontSize: '13px',
+      color:    bl ? '#2a2a3a' : '#ffffff',
       fontStyle: bl ? 'normal' : 'bold'
     }).setOrigin(0.5).setDepth(3).setAlpha(0);
     this._gridObjs.push(nomeObj);
 
     // Função
     const funcaoObj = this.add.text(cx, cy + 20, bl ? 'Bioma ' + p.bioma : p.funcao, {
-      fontSize: '8px', color: bl ? '#222232' : '#7788aa'
+      fontSize: '8px',
+      color:    bl ? '#222232' : (isPlayer ? '#3dff6e' : '#7788aa')
     }).setOrigin(0.5).setDepth(3).setAlpha(0);
     this._gridObjs.push(funcaoObj);
 
-    // Passiva
-    const passivaObj = this.add.text(cx, cy + 42, p.passiva, {
-      fontSize: '8px', color: bl ? '#1e1e2a' : '#555566',
-      align: 'center', lineSpacing: 2
-    }).setOrigin(0.5).setDepth(3).setAlpha(0);
-    this._gridObjs.push(passivaObj);
+    // Interação — hover tooltip para todos; click só para NPCs desbloqueados
+    card.setInteractive({ useHandCursor: !bl && !isPlayer });
 
-    // Interação apenas para desbloqueados
-    if (!bl) {
-      card.setInteractive({ useHandCursor: true });
-      card.on('pointerover', () => {
-        if (this.fase !== 'livre') return;
-        card.setFillStyle(0x1a2d4a);
-      });
-      card.on('pointerout', () => {
-        if (this.fase !== 'livre') return;
+    card.on('pointerover', () => {
+      if (this.fase !== 'livre') return;
+      if (!bl && !isPlayer) card.setFillStyle(0x1a2d4a);
+      this._mostrarHoverTooltip(p, cx, cy);
+    });
+    card.on('pointerout', () => {
+      if (this.fase !== 'livre') return;
+      if (!bl && !isPlayer) {
         const ativo = this.selecionados.has(p.id);
         card.setFillStyle(ativo ? 0x0d1e30 : corFundo);
-      });
+      }
+      this._esconderHoverTooltip();
+    });
+
+    if (!bl && !isPlayer) {
       card.on('pointerdown', () => {
         if (this.fase !== 'livre') return;
         this._toggleSelecionado(p.id, card, check, avatar, p.cor);
       });
     }
 
-    this._cardRefs.push({ card, avatar, check, p, corFundo });
+    this._cardRefs.push({ card, avatar, check, p, corFundo, isPlayer });
   }
 
   _toggleSelecionado(id, card, check, avatar, cor) {
@@ -321,10 +373,10 @@ export class SquadScene extends Scene {
 
   _atualizarVisuaisCards() {
     this._cardRefs.forEach(ref => {
-      if (ref.p.bloqueado) return;
+      if (ref.p.bloqueado || ref.isPlayer) return;
       const ativo = this.selecionados.has(ref.p.id);
       ref.card.setFillStyle(ativo ? 0x0d1e30 : ref.corFundo);
-      ref.card.setStrokeStyle(ativo ? 2 : 1, ativo ? ref.p.cor : ref.p.cor);
+      ref.card.setStrokeStyle(ativo ? 2 : 1, ref.p.cor);
       ref.avatar.setAlpha(ativo ? 1 : 0.3);
       if (ref.check) ref.check.setVisible(ativo);
     });
