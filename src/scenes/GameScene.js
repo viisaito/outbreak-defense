@@ -2,9 +2,9 @@ import { Scene, Math as PhaserMath } from 'phaser';
 
 // ── Config de cada personagem jogável ────────────────────────────
 const PERSONAGENS_CONFIG = {
-  vini:   { nome: 'Vini',   cor: 0x3399ff, custo: 20,  dano: 26, hp: 110  }, // passiva: +20% dano
-  helena: { nome: 'Helena', cor: 0xff66aa, custo: 20, dano: 15, hp: 100 }, // passiva: mais 20% HP
-  daniel: { nome: 'Daniel', cor: 0xffaa33, custo: 20, dano: 19, hp: 90  }  // passiva: 20% chance de desviar do ataque
+  vini:   { nome: 'Vini',   cor: 0x3399ff, custo: 20,  dano: 26, hp: 100  }, // passiva: +20% dano
+  helena: { nome: 'Helena', cor: 0xff66aa, custo: 20, dano: 15, hp: 120 }, // passiva: mais 20% HP
+  daniel: { nome: 'Daniel', cor: 0xffaa33, custo: 20, dano: 20, hp: 90  }  // passiva: 20% chance de desviar do ataque
 };
 
 // ── Cores das roupas para o avatar ──────────────────────────────
@@ -44,6 +44,9 @@ export class GameScene extends Scene {
     // ── Personagem customizado (avatar principal) ──────────────
     this.personagem        = this.registry.get('personagem') || { nome: 'Sobrevivente', genero: 'masc', cabeloIndex: 0, roupaIndex: 0 };
 
+    // ── Aliados mortos (para custo de ressurreição) ────────────
+    this.aliadosMortos     = new Set();
+
     // ── Fundo ──────────────────────────────────────────────────
     this.add.rectangle(400, 225, 800, 450, 0x1a1a2e);
 
@@ -79,9 +82,9 @@ export class GameScene extends Scene {
       repeat: this.tempoPreparacao - 1
     });
 
-    // Timer para habilidades passivas (a cada 20 segundos)
+    // Timer para habilidades passivas (a cada 10 segundos)
     this.timerHabilidades = this.time.addEvent({
-      delay: 20000,
+      delay: 10000,
       callback: this._habilidadesPassivas,
       callbackScope: this,
       loop: true
@@ -124,6 +127,7 @@ export class GameScene extends Scene {
     });
     slot.on('pointerdown', () => {
       if (this.slotSelecionado === slot) {
+        // Desseleciona o slot
         slot.setFillStyle(slot.personagem ? 0x223388 : 0x444466);
         this.slotSelecionado = null;
         this.textoSlot.setText(this.aliadoSelecionado
@@ -134,6 +138,15 @@ export class GameScene extends Scene {
         return;
       }
 
+      if (slot.personagem && this.aliadoSelecionado === slot.personagemId) {
+        // Remove o personagem do slot se o aliado selecionado é o mesmo
+        this._removerPersonagemDoSlot(slot);
+        this.slotSelecionado = null;
+        this.textoSlot.setText('Personagem removido do slot. Clique em outro slot para reposicioná-lo.');
+        return;
+      }
+
+      // Desseleciona slot anterior
       if (this.slotSelecionado) {
         this.slotSelecionado.setFillStyle(this.slotSelecionado.personagem ? 0x223388 : 0x444466);
       }
@@ -142,6 +155,7 @@ export class GameScene extends Scene {
       slot.setFillStyle(0x00cc66);
 
       if (slot.personagem) {
+        // Seleciona o personagem para reposicionamento
         this.aliadoSelecionado = slot.personagemId;
         this._atualizarBordasAliados();
         const personagemNome = slot.personagemId === 'avatar' ? this.personagem.nome : (PERSONAGENS_CONFIG[slot.personagemId]?.nome || 'Aliado');
@@ -150,6 +164,7 @@ export class GameScene extends Scene {
           ' selecionado — clique num slot vazio e depois em ' + personagemNome + ' para reposicionar'
         );
       } else {
+        // Seleciona slot vazio
         const cfg = this.aliadoSelecionado === 'avatar' ? { nome: this.personagem.nome } : PERSONAGENS_CONFIG[this.aliadoSelecionado];
         this.textoSlot.setText(
           'Slot ' + (this.slots.indexOf(slot) + 1) +
@@ -265,7 +280,7 @@ export class GameScene extends Scene {
       nome: this.personagem.nome,
       cor: CORES_ROUPAS[this.personagem.roupaIndex] || 0x888888,
       custo: 20,
-      dano: 20,
+      dano: 22,
       hp: 100
     };
     const targetSlot = this.slots[0]; // Slot da base é o primeiro
@@ -291,17 +306,29 @@ export class GameScene extends Scene {
     }
 
     const id  = this.aliadoSelecionado;
+
+    // Custo para ressuscitar aliado morto
+    if (this.aliadosMortos.has(id)) {
+      if (this.sp < 20) {
+        this.textoSlot.setText('SP insuficiente! Precisa de 20 SP para ressuscitar ' + (id === 'avatar' ? this.personagem.nome : PERSONAGENS_CONFIG[id]?.nome || id) + '.');
+        return;
+      }
+      this.sp -= 20;
+      this.textoSP.setText('SP: ' + this.sp);
+      this.aliadosMortos.delete(id);
+    }
+
     let cfg;
     if (id === 'avatar') {
       cfg = {
         nome: this.personagem.nome,
         cor: CORES_ROUPAS[this.personagem.roupaIndex] || 0x888888,
         custo: 20,
-        dano: 20,
+        dano: 22,
         hp: 100
       };
     } else {
-      cfg = PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 20, hp: 80 };
+      cfg = PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 22, hp: 100 };
     }
 
     // Já posicionado em outro slot? → reposicionamento (custa 20 SP)
@@ -482,6 +509,9 @@ export class GameScene extends Scene {
     this.cameras.main.shake(120, 0.007);
     const cfg = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { nome: 'Aliado' };
     this.textoSlot.setText(cfg.nome + ' foi eliminado pelos infectados!');
+
+    // Marca como morto para custo de ressurreição
+    this.aliadosMortos.add(slot.personagemId);
 
     // Retoma o zumbi imediatamente
     if (z && z.body) z.body.setVelocityX(z._velocidade || 80);
@@ -670,19 +700,19 @@ export class GameScene extends Scene {
   // ========================================================================
 
   _habilidadesPassivas() {
-    // Habilidade de Helena: cura aliados em raio de 200px por 10 HP
+    // Habilidade de Helena: cura aliados em raio de 400px por 15 HP
     const slotHelena = this.slots.find(s => s.personagemId === 'helena' && s.hp > 0);
     if (!slotHelena) return;
 
     for (const slot of this.slots) {
       if (!slot.personagem || slot.hp <= 0 || slot === slotHelena) continue;
       const dist = PhaserMath.Distance.Between(slotHelena.x, slotHelena.y, slot.x, slot.y);
-      if (dist <= 200) {
-        const cura = Math.min(10, slot.maxHp - slot.hp);
+      if (dist <= 400) {
+        const cura = Math.min(15, slot.maxHp - slot.hp);
         if (cura > 0) {
           slot.hp += cura;
           this._atualizarHPTorre(slot);
-          this._floatingText(slot.x, slot.y, '+' + cura + ' HP', '#00ff00');
+          this._floatingText(slot.x, slot.y, '+' + cura, '#00ff00');
         }
       }
     }
