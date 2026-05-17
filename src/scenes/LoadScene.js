@@ -139,8 +139,16 @@ export class LoadScene extends Scene {
 
   // ── Carregar ───────────────────────────────────────────────
   carregarSave(save) {
-    this.registry.set('personagens', save.personagens || []);
+    const aliados = save.aliados || save.personagens || [];
+    this.registry.set('aliados',     aliados);
+    this.registry.set('personagens', aliados);
     this.registry.set('modoJogo',    save.modo || 'normal');
+    this.registry.set('personagem',  {
+      nome:        save.nome        || 'Sobrevivente',
+      genero:      save.genero      || 'masc',
+      cabeloIndex: save.cabeloIndex ?? 0,
+      roupaIndex:  save.roupaIndex  ?? 0
+    });
 
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.time.delayedCall(310, () => this.scene.start('GameScene'));
