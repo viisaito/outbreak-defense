@@ -31,10 +31,10 @@ export class MenuScene extends Scene {
     this.add.rectangle(cx, 215, 200, 1, 0x3dff6e);
 
     // ── Botões ─────────────────────────────────────────────────
-    this.criarBotao(cx, 252, 'START',        () => this.clicarStart());
-    this.criarBotao(cx, 292, 'LOAD',         () => this.fecharOverlay(() => this.scene.start('LoadScene')));
-    this.criarBotao(cx, 332, 'ACHIEVEMENTS', () => this.fecharOverlay(() => this.scene.start('AchievementsScene')));
-    this.criarBotao(cx, 372, 'OPTIONS',      () => this.avisoEmBreve('OPTIONS'));
+    this.criarBotao(cx, 252, 'INICIAR',    () => this.clicarStart());
+    this.criarBotao(cx, 292, 'CARREGAR',   () => this.fecharOverlay(() => this.scene.start('LoadScene')));
+    this.criarBotao(cx, 332, 'CONQUISTAS', () => this.fecharOverlay(() => this.scene.start('AchievementsScene')));
+    this.criarBotao(cx, 372, 'OPÇÕES',     () => this.avisoEmBreve('Opções'));
 
     this.add.text(790, 440, 'v0.1', { fontSize: '11px', color: '#444466' }).setOrigin(1);
   }
@@ -55,7 +55,7 @@ export class MenuScene extends Scene {
       fontSize: '18px', color: '#ffffff', letterSpacing: 5
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.text(400, 148, 'Escolha a dificuldade antes de começar', {
+    itens.push(this.add.text(400, 148, 'Escolha a dificuldade antes de começar:', {
       fontSize: '12px', color: '#555577'
     }).setOrigin(0.5).setDepth(21));
 
@@ -69,7 +69,7 @@ export class MenuScene extends Scene {
       [
         'Velocidade dos zumbis padrão',
         'Dano reduzido na base',
-        'Ondas progressivas'
+        'Ondas progressivas crescentes'
       ],
       () => this.selecionarModo('normal')
     ));
@@ -155,7 +155,7 @@ export class MenuScene extends Scene {
     // Modo difícil ainda não implementado
     if (modo === 'dificil') {
       this.fecharOverlay();
-      this.avisoEmBreve('Modo Difícil');
+      this.avisoEmBreve('Modo Difícil — em breve');
       return;
     }
 

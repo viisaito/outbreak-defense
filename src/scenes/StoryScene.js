@@ -4,22 +4,22 @@ import { Scene } from 'phaser';
 // Troque bgColor por imagens reais quando tiver os assets prontos.
 const SLIDES = [
   {
-    bgColor:  0x2d0a0a,
-    tag:      'DIA 0',
+    bgColor:  0x080005,
+    tag:      'DIA 0 — 06h32',
+    titulo:   'OS PRIMEIROS RELATOS',
+    texto:    'Casos isolados. Pessoas agindo de forma estranha\npelas periferias de São Paulo.\n\nNinguém levou a sério.\nEra só mais um rumor nas redes.'
+  },
+  {
+    bgColor:  0x120003,
+    tag:      'DIA 0 — 14h17',
     titulo:   'O COLAPSO',
-    texto:    'O vírus H-9 se espalhou por São Paulo\nem menos de 48 horas.\n\nHospitais, ruas, bairros inteiros —\ntudo tomado pelos infectados.'
+    texto:    'Em menos de oito horas, a cidade entrou em colapso.\nBuzinas, sirenes, gritos nas ruas.\n\nTodos correndo. Empurrando. Fugindo.\nSem saber pra onde — só pra longe.'
   },
   {
-    bgColor:  0x0a0a2d,
-    tag:      'DIA 30',
-    titulo:   'A CIDADE CAÍDA',
-    texto:    'São Paulo virou uma cidade fantasma.\nOs infectados dominam cada rua,\ncada beco, cada esquina.\n\nPoucos sobreviveram.'
-  },
-  {
-    bgColor:  0x0a2d12,
-    tag:      'AGORA',
+    bgColor:  0x05050f,
+    tag:      'DIA 0 — 21h48',
     titulo:   'O BAR',
-    texto:    'Você encontrou abrigo num bar abandonado\nno centro da cidade.\n\nAlguns sobreviventes se juntaram a você.\nÉ daqui que vocês vão defender São Paulo.'
+    texto:    'Enquanto São Paulo se apagava ao redor,\nvocê encontrou abrigo num bar no centro da cidade.\nPortas travadas. Luz apagada. Silêncio pesado.\n\nMas você não estava sozinho.'
   }
 ];
 
