@@ -17,7 +17,7 @@ export class GameUI {
     s.textoOnda  = s.add.text(16, 38, 'Onda: ' + s.ondaAtual + ' / ' + s.totalOndas, { fontSize: '16px', color: '#ffdd00' }).setDepth(10);
     s.textoSP    = s.add.text(16, 60, 'SP: ' + s.sp, { fontSize: '16px', color: '#00ccff' }).setDepth(10);
     s.textoTempo = s.add.text(16, 82, 'Preparação: 15 s', { fontSize: '16px', color: '#ffffff' }).setDepth(10);
-    s.textoSlot  = s.add.text(16, 432, 'Selecione um aliado e clique num slot para posicionar', { fontSize: '12px', color: '#aaaacc' }).setDepth(10);
+    s.textoSlot  = s.add.text(16, 432, 'Selecione um aliado e arraste-o para um slot para posicionar', { fontSize: '12px', color: '#aaaacc' }).setDepth(10);
 
     // Botão LOJA
     s.btnLoja    = s.add.rectangle(640, 20, 96, 28, 0x1a3a1a).setStrokeStyle(1, 0x3dff6e).setDepth(10).setInteractive({ useHandCursor: true });
@@ -40,6 +40,11 @@ export class GameUI {
     const total  = s.aliados.length + 1;
     const startX = 400 - ((total - 1) * 120) / 2;
     s._iconeBgs  = [];
+    if (!this._dragEventsReady) {
+      s.input.on('pointermove', this._atualizarArraste, this);
+      s.input.on('pointerup', this._finalizarArraste, this);
+      this._dragEventsReady = true;
+    }
 
     const playerCfg = {
       nome: s.personagem.nome,
@@ -63,20 +68,7 @@ export class GameUI {
 
     playerBg.on('pointerover', () => { if (s.aliadoSelecionado !== 'avatar') playerBg.setFillStyle(0x2a2a4a); });
     playerBg.on('pointerout',  () => { if (s.aliadoSelecionado !== 'avatar') playerBg.setFillStyle(0x1a1a2e); });
-    playerBg.on('pointerdown', () => {
-      if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
-      if (s.aliadoSelecionado === 'avatar') {
-        s.aliadoSelecionado = null;
-        this.atualizarBordasAliados();
-        if (s.slotSelecionado) { s.slotSelecionado.setFillStyle(0x444466); s.slotSelecionado = null; }
-        s.textoSlot.setText('Seleção cancelada.');
-        return;
-      }
-      s.aliadoSelecionado = 'avatar';
-      this.atualizarBordasAliados();
-      if (s.slotSelecionado) s.slots_mgr.colocarNoSlot();
-      else s.textoSlot.setText(playerCfg.nome + ' selecionado — clique num slot para posicionar');
-    });
+    playerBg.on('pointerdown', (pointer) => this._iniciarArraste(pointer, 'avatar', playerCfg, playerBg));
 
     s._iconeBgs.push(playerBg);
 
@@ -99,23 +91,97 @@ export class GameUI {
 
       bg.on('pointerover', () => { if (s.aliadoSelecionado !== id) bg.setFillStyle(0x2a2a4a); });
       bg.on('pointerout',  () => { if (s.aliadoSelecionado !== id) bg.setFillStyle(0x1a1a2e); });
-      bg.on('pointerdown', () => {
-        if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
-        if (s.aliadoSelecionado === id) {
-          s.aliadoSelecionado = null;
-          this.atualizarBordasAliados();
-          if (s.slotSelecionado) { s.slotSelecionado.setFillStyle(0x444466); s.slotSelecionado = null; }
-          s.textoSlot.setText('Seleção cancelada.');
-          return;
-        }
-        s.aliadoSelecionado = id;
-        this.atualizarBordasAliados();
-        if (s.slotSelecionado) s.slots_mgr.colocarNoSlot();
-        else s.textoSlot.setText(cfg.nome + ' selecionado — clique num slot para posicionar');
-      });
+      bg.on('pointerdown', (pointer) => this._iniciarArraste(pointer, id, cfg, bg));
 
       s._iconeBgs.push(bg);
     });
+  }
+
+  _iniciarArraste(pointer, id, cfg, bg) {
+    const s = this.s;
+    if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
+
+    if (s.slotSelecionado) {
+      s.slotSelecionado.setFillStyle(s.slotSelecionado.personagem ? 0x223388 : 0x444466);
+      s.slotSelecionado = null;
+    }
+
+    s.aliadoSelecionado = id;
+    this.atualizarBordasAliados();
+    s.textoSlot.setText(cfg.nome + ' selecionado — arraste para um slot para posicionar');
+
+    this._dragSource       = bg;
+    this._dragId           = id;
+    this._dragCfg          = cfg;
+    this._dragHoverSlot    = null;
+    this._dragPreview      = s.add.container(pointer.x, pointer.y).setDepth(50);
+    const previewBg        = s.add.rectangle(0, 0, 110, 40, 0x1a1a2e, 0.95).setStrokeStyle(2, cfg.cor);
+    const previewText      = s.add.text(0, 0, cfg.nome, { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+    this._dragPreview.add([previewBg, previewText]);
+  }
+
+  _atualizarArraste(pointer) {
+    if (!this._dragPreview) return;
+    this._dragPreview.setPosition(pointer.x, pointer.y);
+
+    const s = this.s;
+    const slot = this._slotEmPointer(pointer);
+    if (slot !== this._dragHoverSlot) {
+      if (this._dragHoverSlot) {
+        this._dragHoverSlot.setFillStyle(this._dragHoverSlot.personagem ? 0x223388 : 0x444466);
+      }
+      this._dragHoverSlot = slot;
+      if (this._dragHoverSlot) {
+        const hoverColor = this._dragHoverSlot.personagem && this._dragHoverSlot.personagemId !== this._dragId ? 0xaa2222 : 0x00cc66;
+        this._dragHoverSlot.setFillStyle(hoverColor);
+      }
+    }
+  }
+
+  _finalizarArraste(pointer) {
+    if (!this._dragPreview) return;
+    const s = this.s;
+    const slot = this._slotEmPointer(pointer);
+    if (slot) {
+      if (slot.personagem && slot.personagemId !== this._dragId) {
+        s.textoSlot.setText('Slot ocupado! Arraste para outro slot.');
+        this._cancelarArraste(false);
+        return;
+      }
+
+      if (s.slotSelecionado && s.slotSelecionado !== slot) {
+        s.slotSelecionado.setFillStyle(s.slotSelecionado.personagem ? 0x223388 : 0x444466);
+      }
+      s.slotSelecionado = slot;
+      s.slots_mgr.colocarNoSlot();
+      this._cancelarArraste(true);
+      return;
+    }
+
+    s.textoSlot.setText('Posicionamento cancelado. Arraste um aliado para um slot.');
+    this._cancelarArraste(false);
+  }
+
+  _cancelarArraste(keepSelection) {
+    const s = this.s;
+    if (this._dragPreview) {
+      this._dragPreview.destroy();
+      this._dragPreview = null;
+    }
+    if (this._dragHoverSlot) {
+      this._dragHoverSlot.setFillStyle(this._dragHoverSlot.personagem ? 0x223388 : 0x444466);
+      this._dragHoverSlot = null;
+    }
+
+    if (!keepSelection) {
+      s.aliadoSelecionado = null;
+      this.atualizarBordasAliados();
+    }
+  }
+
+  _slotEmPointer(pointer) {
+    const s = this.s;
+    return s.slots.find(slot => slot.getBounds().contains(pointer.x, pointer.y));
   }
 
   atualizarBordasAliados() {

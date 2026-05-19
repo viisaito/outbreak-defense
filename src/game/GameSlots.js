@@ -17,8 +17,12 @@ export class GameSlots {
     slot.cooldown     = 0;
     slot.hp           = 0;
     slot.maxHp        = 0;
+    slot.armor        = 0;
+    slot.maxArmor     = 0;
     slot.hpBarFundo   = null;
     slot.hpBar        = null;
+    slot.armorBarFundo = null;
+    slot.armorBar      = null;
     slot.personagemId = null;
     slot.isBaseSlot   = !!pos.base;
 
@@ -67,7 +71,13 @@ export class GameSlots {
   posicionarAvatarInicial() {
     const s = this.s;
     if (!s.personagem || s.slots.length === 0) return;
-    const cfg = { nome: s.personagem.nome, cor: CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888, custo: 20, dano: 22, hp: 100 };
+    const cfg = {
+      nome: s.personagem.nome,
+      cor: CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888,
+      custo: 20,
+      dano: 22,
+      hp: 100
+    };
     const slot = s.slots[0];
     if (slot.personagem) return;
     this.posicionarNoSlot(slot, 'avatar', cfg);
@@ -89,7 +99,7 @@ export class GameSlots {
 
     let cfg;
     if (id === 'avatar') {
-      cfg = { nome: s.personagem.nome, cor: CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888, custo: 20, dano: 22, hp: 100 + s.upgrades.avatarHP * 20 };
+      cfg = { nome: s.personagem.nome, cor: CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888, custo: 20, dano: 22, hp: 100 };
     } else {
       cfg = { ...(PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 22, hp: 100 }) };
     }
@@ -114,6 +124,19 @@ export class GameSlots {
     slot.hpBarFundo   = s.add.rectangle(slot.x, slot.y - 34, 44, 6, 0x222233).setDepth(3);
     slot.hpBar        = s.add.rectangle(slot.x - 22, slot.y - 34, 44, 6, cfg.cor).setOrigin(0, 0.5).setDepth(3);
 
+    if (id === 'avatar' && (s.upgrades.avatarHP > 0 || s.avatarEscudoComprado)) {
+      s.upgrades.avatarHP = Math.max(s.upgrades.avatarHP || 0, 1);
+      slot.maxArmor     = s.upgrades.avatarHP * 20;
+      slot.armor        = slot.maxArmor;
+      slot.armorBarFundo = s.add.rectangle(slot.x, slot.y - 42, 44, 6, 0x112a42).setDepth(3);
+      slot.armorBar      = s.add.rectangle(slot.x - 22, slot.y - 42, 44, 6, 0x3399ff).setOrigin(0, 0.5).setDepth(4);
+    } else {
+      slot.maxArmor     = 0;
+      slot.armor        = 0;
+      slot.armorBarFundo = null;
+      slot.armorBar      = null;
+    }
+
     if (id === 'helena') {
       const raio = 260 + s.upgrades.helenaCura * 70;
       slot.healCircle = s.add.circle(slot.x, slot.y, raio, 0x00ff88, 0.04).setStrokeStyle(2, 0x00ff88, 0.4).setDepth(0.5);
@@ -132,10 +155,10 @@ export class GameSlots {
   }
 
   removerDoSlot(slot) {
-    ['personagem', 'rangeCircle', 'aimIcon', 'healCircle', 'hpBarFundo', 'hpBar'].forEach(k => {
+    ['personagem', 'rangeCircle', 'aimIcon', 'healCircle', 'hpBarFundo', 'hpBar', 'armorBarFundo', 'armorBar'].forEach(k => {
       if (slot[k]) { slot[k].destroy(); slot[k] = null; }
     });
-    slot.hp = 0; slot.maxHp = 0; slot.personagemId = null; slot.cooldown = 10;
+    slot.hp = 0; slot.maxHp = 0; slot.armor = 0; slot.maxArmor = 0; slot.personagemId = null; slot.cooldown = 10;
     slot.setFillStyle(0x444466); slot.setStrokeStyle(2, 0x8888aa);
   }
 
@@ -144,5 +167,13 @@ export class GameSlots {
     const ratio = Math.max(0, slot.hp / slot.maxHp);
     slot.hpBar.setSize(Math.round(44 * ratio), 6);
     slot.hpBar.setFillStyle(ratio > 0.5 ? 0x33cc33 : ratio > 0.25 ? 0xffcc33 : 0xff4444);
+
+    if (slot.armorBar) {
+      const armorRatio = slot.maxArmor > 0 ? Math.max(0, slot.armor / slot.maxArmor) : 0;
+      slot.armorBarFundo.setPosition(slot.x, slot.y - 42);
+      slot.armorBar.setPosition(slot.x - 22, slot.y - 42);
+      slot.armorBar.setSize(Math.round(44 * armorRatio), 6);
+      slot.armorBar.setVisible(armorRatio > 0);
+    }
   }
 }

@@ -52,8 +52,8 @@ export class GameWaves {
     s.textoOnda.setText('Onda: ' + s.ondaAtual + ' -- ' + s.eliminados + '/' + s.totalInimigosOnda);
 
     let hp, vel, cor, larg, alt, dano;
-    if (tipo === 'zumbi') { hp = 100; vel = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 30; }
-    else                  { hp = 60;  vel = 150; cor = 0x880000; larg = 24; alt = 24; dano = 15; }
+    if (tipo === 'zumbi') { hp = 100; vel = 80;  cor = 0xff0000; larg = 32; alt = 48; dano = 40; }
+    else                  { hp = 60;  vel = 150; cor = 0x880000; larg = 24; alt = 24; dano = 20; }
 
     const z = s.add.rectangle(30, PhaserMath.Between(50, 400), larg, alt, cor);
     s.physics.add.existing(z);
@@ -65,6 +65,7 @@ export class GameWaves {
   spawnBoss() {
     const s = this.s;
     if (s.gameOver || s.ondaConcluida || !s.ondaIniciada) return;
+    s.bossSpawnEvent = null;
     s.cameras.main.flash(400, 180, 0, 0);
     s.cameras.main.shake(250, 0.012);
 
@@ -75,7 +76,7 @@ export class GameWaves {
     const z = s.add.rectangle(30, 225, 64, 96, 0x880044).setDepth(3);
     s.physics.add.existing(z);
     z.body.setVelocityX(45);
-    z.hp = 400; z.maxHp = 400; z.dano = 50; z.tipo = 'boss'; z._velocidade = 45; z.meleeTimer = 0;
+    z.hp = 400; z.maxHp = 400; z.dano = 60; z.tipo = 'boss'; z._velocidade = 45; z.meleeTimer = 0;
     z._hpFundo = s.add.rectangle(30, 225 - 64, 70, 8, 0x222233).setDepth(4);
     z._hpBar   = s.add.rectangle(30 - 35, 225 - 64, 70, 8, 0xff4400).setOrigin(0, 0.5).setDepth(4);
     z._label   = s.add.text(30, 225 - 76, 'CHEFE', { fontSize: '10px', color: '#ff4444', fontStyle: 'bold', letterSpacing: 2 }).setOrigin(0.5).setDepth(5);
@@ -106,6 +107,8 @@ export class GameWaves {
     s.textoOnda.setText('Onda: ' + s.ondaAtual + ' -- ' + s.eliminados + '/' + s.totalInimigosOnda);
 
     if (s.ondaConcluida) return;
+    const config = s.configOndas[s.ondaAtual - 1];
+    if (config?.boss && s.bossSpawnEvent) return;
     if (s.eliminados >= s.totalInimigosOnda && s.inimigos.length === 0) this.verificarFim();
   }
 
@@ -129,6 +132,8 @@ export class GameWaves {
       s.scene.start('GameOverScene', { onda: s.ondaAtual, eliminados: s.eliminados, hp: 0 });
       return;
     }
+    const config = s.configOndas[s.ondaAtual - 1];
+    if (config?.boss && s.bossSpawnEvent) return;
     if (!s.ondaConcluida && s.eliminados >= s.totalInimigosOnda && s.inimigos.length === 0) this.verificarFim();
   }
 

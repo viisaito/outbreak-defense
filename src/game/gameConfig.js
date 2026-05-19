@@ -41,8 +41,8 @@ export const LOJA_ITENS = [
   },
   {
     id: 'avatarHP', label: 'Colete Balístico',
-    descricao: '+20 HP máximo no seu avatar.',
-    custos: [20], maxNivel: 1
+    descricao: '+60 HP máximo no seu avatar.',
+    custos: [40], maxNivel: 1
   }
 ];
 

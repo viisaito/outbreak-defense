@@ -19,7 +19,13 @@ export class GameCombat {
         z.meleeTimer = (z.meleeTimer || 0) + delta / 1000;
         if (z.meleeTimer >= 1.0) {
           z.meleeTimer = 0;
-          slot.hp -= z.dano;
+          let danoRestante = z.dano;
+          if (slot.personagemId === 'avatar' && slot.armor > 0) {
+            const absorvido = Math.min(slot.armor, danoRestante);
+            slot.armor -= absorvido;
+            danoRestante -= absorvido;
+          }
+          if (danoRestante > 0) slot.hp -= danoRestante;
           if (slot.personagem?.active) {
             const cfg = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { cor: 0x888888 };
             slot.personagem.setFillStyle(0xffffff);

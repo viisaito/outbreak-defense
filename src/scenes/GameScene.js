@@ -48,6 +48,7 @@ export class GameScene extends Scene {
       danielKnockback: 0,
       avatarHP:        0
     };
+    this.avatarEscudoComprado = false;
 
     // ── Dados do jogador ───────────────────────────────────────
     this.aliados           = this.registry.get('aliados') || ['vini'];

@@ -1,22 +1,27 @@
 import { Scene } from 'phaser';
+import bgCorreio from '../assets/CÓRREGO PERIFERIA PX.png';
+import bgTransito from '../assets/TRANSITO SP PX.png';
+import bgBarco from '../assets/BAR COFRE PX.png';
 
 // ── Conteúdo dos slides ────────────────────────────────────────
-// Troque bgColor por imagens reais quando tiver os assets prontos.
 const SLIDES = [
   {
-    bgColor:  0x080005,
+    bgKey:   'slide-corre',
+    bgPath:  bgCorreio,
     tag:      'DIA 0 — 06h32',
     titulo:   'OS PRIMEIROS RELATOS',
     texto:    'Casos isolados. Pessoas agindo de forma estranha\npelas periferias de São Paulo.\n\nNinguém levou a sério.\nEra só mais um rumor nas redes.'
   },
   {
-    bgColor:  0x120003,
+    bgKey:   'slide-transito',
+    bgPath:  bgTransito,
     tag:      'DIA 0 — 14h17',
     titulo:   'O COLAPSO',
     texto:    'Em menos de oito horas, a cidade entrou em colapso.\nBuzinas, sirenes, gritos nas ruas.\n\nTodos correndo. Empurrando. Fugindo.\nSem saber pra onde — só pra longe.'
   },
   {
-    bgColor:  0x05050f,
+    bgKey:   'slide-bar',
+    bgPath:  bgBarco,
     tag:      'DIA 0 — 21h48',
     titulo:   'O BAR',
     texto:    'Enquanto São Paulo se apagava ao redor,\nvocê encontrou abrigo num bar no centro da cidade.\nPortas travadas. Luz apagada. Silêncio pesado.\n\nMas você não estava sozinho.'
@@ -26,18 +31,26 @@ const SLIDES = [
 export class StoryScene extends Scene {
   constructor() { super('StoryScene'); }
 
+  preload() {
+    for (const slide of SLIDES) {
+      if (slide.bgKey && slide.bgPath) {
+        this.load.image(slide.bgKey, slide.bgPath);
+      }
+    }
+  }
+
   create() {
     this.indice = 0;
     this.bloqueado = false; // evita cliques duplos durante transição
 
     // Camadas criadas uma vez — atualizamos o conteúdo a cada slide
-    this.retBg     = this.add.rectangle(400, 225, 800, 450, 0x000000);
-    this.retImagem = this.add.rectangle(400, 160, 520, 200, 0x333333);
+    this.retBg     = this.add.rectangle(400, 225, 800, 450, 0x000000).setDepth(-2);
+    this.retImagem = null;
 
     // Ícone de placeholder no centro da imagem
     this.iconePlaceholder = this.add.text(400, 160, '[ imagem ]', {
       fontSize: '14px', color: '#555577'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(0);
 
     this.textoTag = this.add.text(140, 62, '', {
       fontSize: '11px', color: '#3dff6e', letterSpacing: 4
@@ -85,7 +98,20 @@ export class StoryScene extends Scene {
     // Fade rápido de entrada
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
-    this.retBg.setFillStyle(slide.bgColor);
+    if (this.retImagem) {
+      this.retImagem.destroy();
+      this.retImagem = null;
+    }
+
+    if (slide.bgKey && this.textures.exists(slide.bgKey)) {
+      this.retImagem = this.add.image(400, 160, slide.bgKey)
+        .setDisplaySize(520, 200)
+        .setDepth(-1);
+      this.iconePlaceholder.setVisible(false);
+    } else {
+      this.iconePlaceholder.setVisible(true);
+    }
+
     this.textoTag.setText(slide.tag);
     this.textoTitulo.setText(slide.titulo);
     this.textoCorpo.setText(slide.texto);

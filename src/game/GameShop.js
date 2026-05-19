@@ -103,7 +103,19 @@ export class GameShop {
       case 'danielKnockback':
         s.upgrades.danielKnockback = Math.min((s.upgrades.danielKnockback || 0) + 1, 3); break;
       case 'avatarHP':
-        s.upgrades.avatarHP = 1; break;
+        s.upgrades.avatarHP = Math.max(s.upgrades.avatarHP || 0, 1);
+        s.avatarEscudoComprado = true;
+        const avatarSlot = s.slots.find(sl => sl.personagemId === 'avatar');
+        if (avatarSlot) {
+          avatarSlot.maxArmor = s.upgrades.avatarHP * 20;
+          avatarSlot.armor = avatarSlot.maxArmor;
+          if (!avatarSlot.armorBar) {
+            avatarSlot.armorBarFundo = s.add.rectangle(avatarSlot.x, avatarSlot.y - 42, 44, 6, 0x112a42).setDepth(3);
+            avatarSlot.armorBar = s.add.rectangle(avatarSlot.x - 22, avatarSlot.y - 42, 44, 6, 0x3399ff).setOrigin(0, 0.5).setDepth(4);
+          }
+          s.slots_mgr.atualizarHPTorre(avatarSlot);
+        }
+        break;
     }
     s.ui.floatingText(400, 200, '✔ Upgrade comprado!', '#3dff6e');
   }
