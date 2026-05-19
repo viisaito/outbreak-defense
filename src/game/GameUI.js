@@ -37,13 +37,52 @@ export class GameUI {
   // ── Ícones de aliados ──────────────────────────────────────────
   criarIconesAliados() {
     const s      = this.s;
-    const total  = s.aliados.length;
+    const total  = s.aliados.length + 1;
     const startX = 400 - ((total - 1) * 120) / 2;
     s._iconeBgs  = [];
 
+    const playerCfg = {
+      nome: s.personagem.nome,
+      cor:  CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888,
+      custo: 0
+    };
+    const playerX = startX;
+    const playerY = 405;
+    const playerSel = s.aliadoSelecionado === 'avatar';
+
+    const playerBg = s.add.rectangle(playerX, playerY, 102, 44, playerSel ? 0x0d1e30 : 0x1a1a2e)
+      .setStrokeStyle(playerSel ? 2 : 1, playerSel ? playerCfg.cor : 0x333355)
+      .setInteractive({ useHandCursor: true }).setDepth(10);
+
+    s.add.rectangle(playerX - 33, playerY, 28, 28, playerCfg.cor).setDepth(11);
+    s.add.text(playerX - 12, playerY - 11, 'VOCÊ', { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setDepth(11);
+    s.add.text(playerX - 12, playerY + 7, 'JOGADOR', { fontSize: '10px', color: '#aaaacc' }).setDepth(11);
+
+    playerBg._aliadoId = 'avatar';
+    playerBg._cfg      = playerCfg;
+
+    playerBg.on('pointerover', () => { if (s.aliadoSelecionado !== 'avatar') playerBg.setFillStyle(0x2a2a4a); });
+    playerBg.on('pointerout',  () => { if (s.aliadoSelecionado !== 'avatar') playerBg.setFillStyle(0x1a1a2e); });
+    playerBg.on('pointerdown', () => {
+      if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
+      if (s.aliadoSelecionado === 'avatar') {
+        s.aliadoSelecionado = null;
+        this.atualizarBordasAliados();
+        if (s.slotSelecionado) { s.slotSelecionado.setFillStyle(0x444466); s.slotSelecionado = null; }
+        s.textoSlot.setText('Seleção cancelada.');
+        return;
+      }
+      s.aliadoSelecionado = 'avatar';
+      this.atualizarBordasAliados();
+      if (s.slotSelecionado) s.slots_mgr.colocarNoSlot();
+      else s.textoSlot.setText(playerCfg.nome + ' selecionado — clique num slot para posicionar');
+    });
+
+    s._iconeBgs.push(playerBg);
+
     s.aliados.forEach((id, i) => {
       const cfg   = PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888, custo: 20, dano: 20, hp: 80 };
-      const cx    = startX + i * 120;
+      const cx    = startX + (i + 1) * 120;
       const cy    = 405;
       const isSel = s.aliadoSelecionado === id;
 

@@ -17,7 +17,7 @@ const PERSONAGENS = [
   },
   {
     id: 'helena', nome: 'HELENA MARIA',    funcao: 'Garçonete',
-    passiva: 'Cura aliados em raio\n(+10HP a cada 20s)',
+    passiva: 'Cura aliados em raio\n(+15HP a cada 10s)',
     cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 80,  dano: 4
   },
   {

@@ -88,7 +88,7 @@ export class GameScene extends Scene {
     });
 
     this.timerHabilidades = this.time.addEvent({
-      delay: 20000, callback: this.combat.habilidadesPassivas,
+      delay: 10000, callback: this.combat.habilidadesPassivas,
       callbackScope: this.combat, loop: true
     });
 
