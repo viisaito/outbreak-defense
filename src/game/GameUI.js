@@ -1,4 +1,4 @@
-import { TUTORIAL_PASSOS, PERSONAGENS_CONFIG } from './gameConfig.js';
+import { TUTORIAL_PASSOS, PERSONAGENS_CONFIG, CORES_ROUPAS } from './gameConfig.js';
 
 // Responsável por: HUD, tutorial, pausa, ícones de aliados, texto flutuante
 

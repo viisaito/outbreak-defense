@@ -36,7 +36,11 @@ export class GameWaves {
 
     this.spawnZumbi();
     s.time.addEvent({ delay: 2000, repeat: totalNormais - 1, callback: this.spawnZumbi, callbackScope: this });
-    if (config.boss) s.time.delayedCall(totalNormais * 2000 + 2500, this.spawnBoss, [], this);
+    if (config.boss) {
+      s.bossSpawnEvent = s.time.delayedCall(totalNormais * 2000 + 2500, this.spawnBoss, [], this);
+    } else {
+      s.bossSpawnEvent = null;
+    }
   }
 
   // ── Spawn ──────────────────────────────────────────────────────
@@ -60,7 +64,7 @@ export class GameWaves {
 
   spawnBoss() {
     const s = this.s;
-    if (s.gameOver) return;
+    if (s.gameOver || s.ondaConcluida || !s.ondaIniciada) return;
     s.cameras.main.flash(400, 180, 0, 0);
     s.cameras.main.shake(250, 0.012);
 
@@ -139,6 +143,7 @@ export class GameWaves {
     const s = this.s;
     if (s.ondaConcluida) return;
     s.ondaConcluida = true;
+    if (s.bossSpawnEvent) { s.bossSpawnEvent.remove(false); s.bossSpawnEvent = null; }
 
     if (s.ondaAtual === s.totalOndas) {
       const estrelas = s.inimigosDanaram === 0 ? 3 : s.inimigosDanaram <= 2 ? 2 : 1;

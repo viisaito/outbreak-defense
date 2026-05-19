@@ -13,12 +13,12 @@ const PERSONAGENS = [
   {
     id: 'vini',   nome: 'VINI CARVALHO',   funcao: 'Policial S.P.D.',
     passiva: '+20% de dano com a\narma principal (.45)',
-    cor: 0x3399ff, bloqueado: false, bioma: 1, hp: 110, dano: 8
+    cor: 0x3399ff, bloqueado: false, bioma: 1, hp: 100, dano: 8
   },
   {
     id: 'helena', nome: 'HELENA MARIA',    funcao: 'Garçonete',
     passiva: 'Cura aliados em raio\n(+15HP a cada 10s)',
-    cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 80,  dano: 4
+    cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 110,  dano: 4
   },
   {
     id: 'daniel', nome: 'DANIEL FERNANDES', funcao: 'Mecânico',
@@ -28,12 +28,12 @@ const PERSONAGENS = [
   {
     id: 'filipa', nome: 'FILIPA SAITO',    funcao: 'Hacker TI',
     passiva: 'Habilita terminais\ne portas eletrônicas',
-    cor: 0x9966ff, bloqueado: true,  bioma: 2, hp: 75,  dano: 4
+    cor: 0x9966ff, bloqueado: true,  bioma: 2, hp: 85,  dano: 4
   },
   {
     id: 'ana',    nome: 'ANA SILVA',       funcao: 'Jornalista',
     passiva: 'Itens extras em\ncômodos bloqueados',
-    cor: 0xffcc33, bloqueado: true,  bioma: 2, hp: 70,  dano: 3
+    cor: 0xffcc33, bloqueado: true,  bioma: 2, hp: 85,  dano: 3
   },
   {
     id: 'nadia',  nome: 'DRA. NÁDIA',      funcao: 'Cirurgiã',
