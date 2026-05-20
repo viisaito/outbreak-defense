@@ -46,21 +46,30 @@ export const LOJA_ITENS = [
   }
 ];
 
+// spot: área a destacar (x, y, w, h) | cx/cy: centro do callout de texto
 export const TUTORIAL_PASSOS = [
   {
-    titulo: 'BEM-VINDO AO BAR',
-    texto:  'Esta é a sua base. O lado direito (verde)\né o ponto que você deve defender.\nSe os infectados chegarem lá, você perde HP.'
+    titulo: 'SUA BASE',
+    texto:  'Esta parede verde é sua base.\nSe os infectados chegarem aqui,\nvocê perde vida.\nHP = 0 → fim de jogo!',
+    spot:   { x: 718, y: 0,   w: 82,  h: 450 },
+    cx: 310, cy: 225
   },
   {
-    titulo: 'POSICIONAMENTO',
-    texto:  'Clique num aliado na barra inferior para selecioná-lo.\nDepois clique num slot colorido no mapa para posicioná-lo.\nReposicionar custa SP.'
+    titulo: 'SLOTS DE DEFESA',
+    texto:  'Posicione aliados nestes slots.\nCada slot ataca inimigos dentro\ndo seu raio (círculo azul).\nArraste um aliado até um slot.',
+    spot:   { x: 158, y: 108, w: 400, h: 234 },
+    cx: 648, cy: 225
   },
   {
-    titulo: 'LOJA E SP',
-    texto:  'SP são Suprimentos — sua moeda do jogo.\nAbra a LOJA para comprar upgrades antes de cada onda.\nVocê ganha SP ao eliminar inimigos.'
+    titulo: 'SEUS ALIADOS',
+    texto:  'Seus aliados ficam aqui embaixo.\nArraste um deles até um slot livre\npara posicioná-lo na defesa.\nCada personagem tem uma passiva única.',
+    spot:   { x: 80,  y: 382, w: 640, h: 50  },
+    cx: 400, cy: 284
   },
   {
-    titulo: 'BOA SORTE!',
-    texto:  'Você tem 15 segundos para se preparar antes da 1ª onda.\nInimigos virão da esquerda em direção à base.\nMonte seu esquadrão e bora defender São Paulo!'
+    titulo: 'SP E LOJA',
+    texto:  'SP = Suprimentos, sua moeda.\nVocê ganha SP eliminando infectados.\nAbra a LOJA antes de cada onda\npara comprar upgrades ao esquadrão.',
+    spot:   { x: 0,   y: 5,   w: 730, h: 96  },
+    cx: 400, cy: 218
   }
 ];

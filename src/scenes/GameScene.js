@@ -10,9 +10,21 @@ export class GameScene extends Scene {
 
   create() {
     // ── Estado da partida ──────────────────────────────────────
-    this.baseMaxHP         = 120;
-    this.baseHP            = this.baseMaxHP;
-    this.ondaAtual         = 1;
+    // Lê dados salvos do registry (null quando é partida nova)
+    const _ondaSalva     = this.registry.get('ondaAtual');
+    const _spSalvo       = this.registry.get('spSalvo');
+    const _baseHPSalvo   = this.registry.get('baseHPSalvo');
+    const _baseMaxHPSalvo= this.registry.get('baseMaxHPSalvo');
+    const _upgradesSalvos= this.registry.get('upgradesSalvos');
+    const _avatarEscudo  = this.registry.get('avatarEscudo');
+    const _slotsSalvos   = this.registry.get('slotsSalvos');
+    // Limpa para não vazar em partidas futuras
+    ['ondaAtual','spSalvo','baseHPSalvo','baseMaxHPSalvo',
+     'upgradesSalvos','avatarEscudo','slotsSalvos'].forEach(k => this.registry.remove(k));
+
+    this.baseMaxHP         = _baseMaxHPSalvo || 120;
+    this.baseHP            = (_baseHPSalvo   != null) ? _baseHPSalvo : this.baseMaxHP;
+    this.ondaAtual         = _ondaSalva      || 1;
     this.totalOndas        = 3;
     this.configOndas       = [
       { zumbis: 4, caes: 1 },
@@ -25,7 +37,7 @@ export class GameScene extends Scene {
     this.inimigosDanaram   = 0;
     this.gameOver          = false;
     this.pausado           = false;
-    this.sp                = 60;
+    this.sp                = (_spSalvo       != null) ? _spSalvo       : 60;
     this.preparacao        = true;
     this.tempoPreparacao   = 15;
     this.ondaIniciada      = false;
@@ -79,7 +91,19 @@ export class GameScene extends Scene {
 
     this.ui.criarHUD();
     this.ui.criarIconesAliados();
-    this.slots_mgr.posicionarAvatarInicial();
+
+    // Restaurar upgrades antes de posicionar torres (alguns afetam HP/armadura)
+    if (_upgradesSalvos) {
+      Object.assign(this.upgrades, _upgradesSalvos);
+      this.avatarEscudoComprado = _avatarEscudo || false;
+    }
+
+    if (_slotsSalvos) {
+      this.slots_mgr.restaurarSlots(_slotsSalvos);
+    } else {
+      this.slots_mgr.posicionarAvatarInicial();
+    }
+
     this.atualizarCorDaBase();
 
     // ── Timers ─────────────────────────────────────────────────

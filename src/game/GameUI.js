@@ -194,32 +194,80 @@ export class GameUI {
     });
   }
 
-  // ── Tutorial ───────────────────────────────────────────────────
+  // ── Tutorial com spotlight ─────────────────────────────────────
   mostrarTutorial(idx) {
     const s = this.s;
     if (idx >= TUTORIAL_PASSOS.length) {
       s.tutorialAtivo = false;
       localStorage.setItem('outbreak-tutorial-game', '1');
+
+      // O timer consumiu seus repeats durante o tutorial — reinicia do zero
+      if (s.timerPreparacaoEvent) { s.timerPreparacaoEvent.remove(false); }
+      s.tempoPreparacao = 15;
+      s.textoTempo.setText('Preparação: 15 s');
+      s.timerPreparacaoEvent = s.time.addEvent({
+        delay: 1000, callback: s.waves.tick, callbackScope: s.waves,
+        repeat: s.tempoPreparacao - 1
+      });
       return;
     }
     s.tutorialAtivo = true;
-    const passo  = TUTORIAL_PASSOS[idx];
+    const p      = TUTORIAL_PASSOS[idx];
     const ultimo = idx === TUTORIAL_PASSOS.length - 1;
     const objs   = [];
+    const sp     = p.spot;
+    const DIM    = 0.82;
+    const W = 800, H = 450;
 
-    objs.push(s.add.rectangle(400, 225, 800, 450, 0x000000, 0.72).setDepth(60));
-    objs.push(s.add.rectangle(400, 240, 500, 170, 0x0a1520).setStrokeStyle(2, 0x3dff6e).setDepth(61));
-    objs.push(s.add.text(400, 172, passo.titulo, { fontSize: '16px', color: '#3dff6e', letterSpacing: 3, fontStyle: 'bold' }).setOrigin(0.5).setDepth(62));
-    objs.push(s.add.text(400, 232, passo.texto, { fontSize: '13px', color: '#ccccdd', align: 'center', lineSpacing: 6 }).setOrigin(0.5).setDepth(62));
-    objs.push(s.add.text(400, 300, (idx + 1) + ' / ' + TUTORIAL_PASSOS.length, { fontSize: '10px', color: '#555577' }).setOrigin(0.5).setDepth(62));
+    // ── Spotlight: 4 painéis escuros ao redor do elemento ──────
+    if (sp.y > 0)
+      objs.push(s.add.rectangle(W/2, sp.y/2, W, sp.y, 0x000000, DIM).setDepth(60));
+    const bY = sp.y + sp.h;
+    if (bY < H)
+      objs.push(s.add.rectangle(W/2, bY + (H-bY)/2, W, H-bY, 0x000000, DIM).setDepth(60));
+    if (sp.x > 0)
+      objs.push(s.add.rectangle(sp.x/2, sp.y + sp.h/2, sp.x, sp.h, 0x000000, DIM).setDepth(60));
+    const rX = sp.x + sp.w;
+    if (rX < W)
+      objs.push(s.add.rectangle(rX + (W-rX)/2, sp.y + sp.h/2, W-rX, sp.h, 0x000000, DIM).setDepth(60));
 
-    const btnBg  = s.add.rectangle(400, 320, 160, 30, 0x1a4a2a).setStrokeStyle(1, 0x3dff6e).setDepth(62).setInteractive({ useHandCursor: true });
-    const btnTxt = s.add.text(400, 320, ultimo ? 'COMEÇAR!' : 'PRÓXIMO →', { fontSize: '13px', color: '#3dff6e', letterSpacing: 2 }).setOrigin(0.5).setDepth(63);
-    objs.push(btnBg, btnTxt);
+    // Borda pulsante ao redor do spotlight
+    const border = s.add.rectangle(sp.x + sp.w/2, sp.y + sp.h/2, sp.w, sp.h, 0x000000, 0)
+      .setStrokeStyle(2, 0x3dff6e, 0.7).setDepth(61);
+    objs.push(border);
+    s.tweens.add({ targets: border, alpha: 0.25, duration: 650, yoyo: true, repeat: -1 });
 
-    btnBg.on('pointerover', () => btnBg.setFillStyle(0x27ae60));
-    btnBg.on('pointerout',  () => btnBg.setFillStyle(0x1a4a2a));
-    btnBg.on('pointerup',   () => { objs.forEach(o => o.destroy()); this.mostrarTutorial(idx + 1); });
+    // ── Callout de texto ────────────────────────────────────────
+    const CW = 238, CH = 154;
+    const cx = p.cx, cy = p.cy;
+
+    objs.push(s.add.rectangle(cx, cy, CW, CH, 0x050c16).setStrokeStyle(1, 0x2a5a2a).setDepth(62));
+
+    objs.push(s.add.text(cx, cy - CH/2 + 15, p.titulo, {
+      fontSize: '11px', color: '#3dff6e', letterSpacing: 3, fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(63));
+
+    objs.push(s.add.rectangle(cx, cy - CH/2 + 25, CW - 20, 1, 0x0f2a12).setDepth(63));
+
+    objs.push(s.add.text(cx, cy - 4, p.texto, {
+      fontSize: '10px', color: '#9aabbc', align: 'center', lineSpacing: 5,
+      wordWrap: { width: CW - 20 }
+    }).setOrigin(0.5).setDepth(63));
+
+    objs.push(s.add.text(cx - CW/2 + 10, cy + CH/2 - 14, (idx+1) + '/' + TUTORIAL_PASSOS.length, {
+      fontSize: '9px', color: '#3a3a5a'
+    }).setDepth(63));
+
+    const btn = s.add.rectangle(cx + 32, cy + CH/2 - 14, 106, 21, 0x1a4a2a)
+      .setStrokeStyle(1, 0x3dff6e).setDepth(63).setInteractive({ useHandCursor: true });
+    const btnTxt = s.add.text(cx + 32, cy + CH/2 - 14, ultimo ? '▶  COMEÇAR' : 'PRÓXIMO →', {
+      fontSize: '9px', color: '#3dff6e', letterSpacing: 1
+    }).setOrigin(0.5).setDepth(64);
+    objs.push(btn, btnTxt);
+
+    btn.on('pointerover', () => btn.setFillStyle(0x27ae60));
+    btn.on('pointerout',  () => btn.setFillStyle(0x1a4a2a));
+    btn.on('pointerup',   () => { objs.forEach(o => o.destroy()); this.mostrarTutorial(idx + 1); });
   }
 
   // ── Pausa ──────────────────────────────────────────────────────
@@ -233,19 +281,21 @@ export class GameUI {
 
     const objs = [];
     objs.push(s.add.rectangle(400, 225, 800, 450, 0x000000, 0.80).setDepth(80));
-    objs.push(s.add.text(400, 110, '⏸  PAUSADO', { fontSize: '22px', color: '#ffffff', letterSpacing: 5 }).setOrigin(0.5).setDepth(81));
-    objs.push(s.add.rectangle(400, 225, 260, 270, 0x0a1520).setStrokeStyle(2, 0x333355).setDepth(81));
+    objs.push(s.add.text(400, 96, '⏸  PAUSADO', { fontSize: '20px', color: '#ffffff', letterSpacing: 5 }).setOrigin(0.5).setDepth(81));
+    // Caixa: 260×300, centralizada em y=238 → topo 88, base 388
+    objs.push(s.add.rectangle(400, 238, 260, 300, 0x0a1520).setStrokeStyle(2, 0x333355).setDepth(81));
 
     const opcoes = [
-      { label: '💾  SALVAR',           acao: () => this.salvarJogo() },
+      { label: '💾  SALVAR',           acao: () => this.abrirMenuSalvar() },
       { label: '🔊  OPÇÕES (em breve)', acao: null },
       { label: '🗺  VOLTAR AO MAPA',   acao: null },
       { label: '🏠  MENU PRINCIPAL',   acao: () => { this.fecharPausa(objs); s.scene.start('MenuScene'); } },
       { label: '▶   RETOMAR',          acao: () => this.fecharPausa(objs) }
     ];
 
+    // 5 itens × 44px de espaço, iniciando em y=120 → 120,164,208,252,296,340 — todos dentro da caixa (88–388)
     opcoes.forEach((op, i) => {
-      const cy  = 158 + i * 48;
+      const cy  = 130 + i * 44;
       const bg  = s.add.rectangle(400, cy, 220, 36, 0x111128).setStrokeStyle(1, 0x2a2a4a).setDepth(82).setInteractive({ useHandCursor: !!op.acao });
       const txt = s.add.text(400, cy, op.label, { fontSize: '13px', color: op.acao ? '#ffffff' : '#444466', letterSpacing: 1 }).setOrigin(0.5).setDepth(83);
       if (op.acao) {
@@ -269,18 +319,105 @@ export class GameUI {
     s.timerHabilidades.paused = false;
   }
 
-  salvarJogo() {
+  // ── Salvar: seleção de slot ────────────────────────────────────
+  abrirMenuSalvar() {
+    const s    = this.s;
+    const KEYS = ['outbreak-defense-save-1', 'outbreak-defense-save-2'];
+    const saves = KEYS.map(k => { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; });
+
+    const objs = [];
+    objs.push(s.add.rectangle(400, 225, 800, 450, 0x000000, 0.55).setDepth(90));
+    objs.push(s.add.rectangle(400, 225, 500, 310, 0x080e1c).setStrokeStyle(1, 0x2a2a4a).setDepth(90));
+
+    objs.push(s.add.text(400, 95, 'SALVAR PARTIDA', {
+      fontSize: '14px', color: '#ffffff', letterSpacing: 4
+    }).setOrigin(0.5).setDepth(91));
+    objs.push(s.add.text(400, 118, 'Escolha o slot onde deseja salvar:', {
+      fontSize: '11px', color: '#555577'
+    }).setOrigin(0.5).setDepth(91));
+    objs.push(s.add.rectangle(400, 134, 440, 1, 0x1a1a3a).setDepth(91));
+
+    const CARD_W = 440;
+    const LEFT   = 400 - CARD_W / 2 + 18;
+    const RIGHT  = 400 + CARD_W / 2 - 14;
+
+    saves.forEach((save, i) => {
+      const cy   = 186 + i * 96;
+      const card = s.add.rectangle(400, cy, CARD_W, 80, 0x0d1220)
+        .setStrokeStyle(1, 0x252545).setDepth(91).setInteractive({ useHandCursor: true });
+
+      objs.push(s.add.text(LEFT, cy - 30, 'SLOT ' + (i + 1), {
+        fontSize: '9px', color: '#3dff6e', letterSpacing: 3
+      }).setDepth(92));
+
+      if (save) {
+        objs.push(s.add.text(LEFT, cy - 14, save.nome || 'Sobrevivente', {
+          fontSize: '14px', color: '#ffffff', fontStyle: 'bold'
+        }).setDepth(92));
+        const aliados = (save.aliados || []).join(', ');
+        if (aliados) objs.push(s.add.text(LEFT, cy + 6, 'Aliados: ' + aliados, {
+          fontSize: '10px', color: '#00ccff'
+        }).setDepth(92));
+        const generoTxt = save.genero === 'fem' ? 'Feminino' : 'Masculino';
+        const ondaTxt   = save.ondaAtual ? '  •  Onda ' + save.ondaAtual : '';
+        objs.push(s.add.text(LEFT, cy + 22, (save.savedAt || '') + '  •  ' + generoTxt + ondaTxt, {
+          fontSize: '10px', color: '#444466'
+        }).setDepth(92));
+        const aviso = s.add.text(RIGHT, cy, '⚠  sobrescrever', {
+          fontSize: '10px', color: '#7a3311'
+        }).setOrigin(1, 0.5).setDepth(92);
+        objs.push(aviso);
+        card.on('pointerover', () => { card.setStrokeStyle(1, 0xff6633); card.setFillStyle(0x1e0e08); aviso.setStyle({ color: '#ff6633' }); });
+        card.on('pointerout',  () => { card.setStrokeStyle(1, 0x252545); card.setFillStyle(0x0d1220); aviso.setStyle({ color: '#7a3311' }); });
+      } else {
+        objs.push(s.add.text(LEFT, cy - 2, '— slot vazio —', {
+          fontSize: '12px', color: '#333355'
+        }).setDepth(92));
+        card.on('pointerover', () => { card.setStrokeStyle(1, 0x3dff6e); card.setFillStyle(0x0a1a0a); });
+        card.on('pointerout',  () => { card.setStrokeStyle(1, 0x252545); card.setFillStyle(0x0d1220); });
+      }
+
+      card.on('pointerup', () => { objs.forEach(o => o.destroy()); this._confirmarSalvar(i + 1); });
+      objs.push(card);
+    });
+
+    const cancelar = s.add.text(400, 360, 'CANCELAR', {
+      fontSize: '12px', color: '#444466', letterSpacing: 3
+    }).setOrigin(0.5).setDepth(91).setInteractive({ useHandCursor: true });
+    cancelar.on('pointerover', () => cancelar.setStyle({ color: '#aaaacc' }));
+    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#444466' }));
+    cancelar.on('pointerup',   () => objs.forEach(o => o.destroy()));
+    objs.push(cancelar);
+  }
+
+  _confirmarSalvar(slot) {
     const s   = this.s;
-    const slot = s.registry.get('slotAtual') || 1;
-    const key  = 'outbreak-defense-save-' + slot;
-    const raw  = localStorage.getItem(key);
+    const key = 'outbreak-defense-save-' + slot;
+    const raw = localStorage.getItem(key);
     const save = raw ? JSON.parse(raw) : {};
-    save.ondaAtual = s.ondaAtual;
-    save.sp        = s.sp;
-    save.baseHP    = s.baseHP;
-    save.savedAt   = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    Object.assign(save, {
+      nome:       s.personagem?.nome   || save.nome,
+      genero:     s.personagem?.genero || save.genero,
+      aliados:    s.aliados            || save.aliados,
+      ondaAtual:  s.ondaAtual,
+      sp:         s.sp,
+      baseHP:     s.baseHP,
+      baseMaxHP:  s.baseMaxHP,
+      upgrades:   { ...s.upgrades },
+      avatarEscudo: s.avatarEscudoComprado || false,
+      // posição de cada slot: id do personagem ou null
+      slots: s.slots.map(sl => sl.personagemId
+        ? { id: sl.personagemId, hp: sl.hp, maxHp: sl.maxHp }
+        : null
+      ),
+      savedAt: new Date().toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      })
+    });
     localStorage.setItem(key, JSON.stringify(save));
-    this.floatingText(400, 220, '💾 Salvo!', '#3dff6e');
+    s.registry.set('slotAtual', slot);
+    this.floatingText(400, 225, '💾 Slot ' + slot + ' salvo!', '#3dff6e');
   }
 
   // ── Texto flutuante ────────────────────────────────────────────

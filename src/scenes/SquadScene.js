@@ -23,7 +23,7 @@ const PERSONAGENS = [
   {
     id: 'daniel', nome: 'DANIEL FERNANDES', funcao: 'Mecânico',
     passiva: 'Arremessa chave de rosca\n+ conserta armas e base',
-    cor: 0xffaa33, bloqueado: false, bioma: 1, hp: 95,  dano: 7
+    cor: 0xffaa33, bloqueado: true, bioma: 2, hp: 95,  dano: 7
   },
   {
     id: 'filipa', nome: 'FILIPA SAITO',    funcao: 'Hacker TI',
@@ -69,15 +69,15 @@ const NARRATIVA = [
   },
   {
     tag:   'OS SOBREVIVENTES',
-    texto: 'Cada um chegou por um motivo diferente.\nNenhum escolheu estar aqui.\n\nMas agora a escolha é sua —\nquem vai ao seu lado?'
+    texto: 'Cada um chegou por um motivo diferente.\nNenhum escolheu estar aqui.\n\nMas agora a escolha é sua, \nquem vai ao seu lado?'
   }
 ];
 
 // ── Tooltips do tutorial ───────────────────────────────────────
 const TOOLTIPS = [
-  'Estes são os sobreviventes encontrados\nno bar — cada um com habilidades únicas.',
+  'Estes são os sobreviventes encontrados\nno bar, cada um com habilidades únicas.',
   'Os aliados bloqueados serão desbloqueados\nconforme você avança pelos biomas.',
-  'Passe o mouse sobre os personagens para\nver os atributos. Selecione até 3 aliados.'
+  'Passe o mouse sobre os personagens para\nver os atributos. Selecione até 2 aliados \nno primeiro nível.'
 ];
 
 export class SquadScene extends Scene {
@@ -172,21 +172,21 @@ export class SquadScene extends Scene {
     this._hvBg     = this.add.rectangle(0, 0, 178, 128, 0x060c14)
       .setStrokeStyle(1, 0x3dff6e).setDepth(d).setVisible(false);
     this._hvNome   = this.add.text(0, 0, '', {
-      fontSize: '10px', color: '#3dff6e', fontStyle: 'bold', letterSpacing: 1
+      fontSize: '12px', color: '#3dff6e', fontStyle: 'bold', letterSpacing: 1
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
     this._hvFuncao = this.add.text(0, 0, '', {
-      fontSize: '8px', color: '#7788aa'
+      fontSize: '10px', color: '#7788aa'
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
     this._hvSep    = this.add.rectangle(0, 0, 150, 1, 0x1a2a3a)
       .setDepth(d + 1).setVisible(false);
     this._hvHp     = this.add.text(0, 0, '', {
-      fontSize: '10px', color: '#ff6666'
+      fontSize: '12px', color: '#ff6666'
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
     this._hvDano   = this.add.text(0, 0, '', {
-      fontSize: '10px', color: '#ffaa44'
+      fontSize: '12px', color: '#ffaa44'
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
     this._hvPassiva = this.add.text(0, 0, '', {
-      fontSize: '8px', color: '#aaaacc', align: 'center',
+      fontSize: '10px', color: '#aaaacc', align: 'center',
       lineSpacing: 4, wordWrap: { width: 158 }
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
 
@@ -248,7 +248,7 @@ export class SquadScene extends Scene {
       id:       'player',
       nome:     this.dadosPersonagem.nome,
       funcao:   'Sobrevivente',
-      passiva:  'Boost de dano em raio\npara aliados próximos.\nEquipa pistolas e faca de combate.',
+      passiva:  'Boost de dano em raio\npara aliados próximos.\nTem habilidade de equipar diversas armas.',
       cor:      roupaCor,
       bloqueado: false,
       bioma:    1,

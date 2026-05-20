@@ -154,6 +154,35 @@ export class GameSlots {
     s.textoSlot.setText(cfg.nome + ' posicionado no slot ' + (s.slots.indexOf(slot) + 1) + '!');
   }
 
+  restaurarSlots(slotsSalvos) {
+    const s = this.s;
+    // Remove qualquer personagem já posicionado (ex: avatar inicial)
+    s.slots.forEach(sl => { if (sl.personagem) this.removerDoSlot(sl); });
+
+    slotsSalvos.forEach((dado, i) => {
+      if (!dado?.id) return;
+      const slot = s.slots[i];
+      if (!slot) return;
+
+      let cfg;
+      if (dado.id === 'avatar') {
+        cfg = {
+          nome: s.personagem.nome,
+          cor:  CORES_ROUPAS[s.personagem.roupaIndex] || 0x888888,
+          custo: 20, dano: 22, hp: dado.maxHp || 100
+        };
+      } else {
+        cfg = { ...(PERSONAGENS_CONFIG[dado.id] || { nome: dado.id, cor: 0x888888, custo: 20, dano: 22, hp: 80 }) };
+        cfg.hp = dado.maxHp || cfg.hp;
+      }
+
+      this.posicionarNoSlot(slot, dado.id, cfg);
+      // Restaura HP atual (pode ser menor que o máximo)
+      slot.hp = dado.hp ?? cfg.hp;
+      this.atualizarHPTorre(slot);
+    });
+  }
+
   removerDoSlot(slot) {
     ['personagem', 'rangeCircle', 'aimIcon', 'healCircle', 'hpBarFundo', 'hpBar', 'armorBarFundo', 'armorBar'].forEach(k => {
       if (slot[k]) { slot[k].destroy(); slot[k] = null; }

@@ -177,26 +177,29 @@ export class MenuScene extends Scene {
   abrirOverlaySobrescrita(save1, save2) {
     const itens = [];
 
-    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.75).setDepth(20));
+    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.82).setDepth(20));
+    itens.push(this.add.rectangle(400, 225, 560, 360, 0x0a0f1c).setStrokeStyle(1, 0x2a2a4a).setDepth(20));
 
-    itens.push(this.add.text(400, 105, 'AMBOS OS SLOTS ESTÃO OCUPADOS', {
-      fontSize: '15px', color: '#ff9944', letterSpacing: 3
+    itens.push(this.add.text(400, 90, 'AMBOS OS SLOTS ESTÃO OCUPADOS', {
+      fontSize: '13px', color: '#ff9944', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.text(400, 132, 'Escolha qual slot deseja sobrescrever:', {
-      fontSize: '13px', color: '#aaaacc'
+    itens.push(this.add.text(400, 116, 'Escolha qual slot deseja sobrescrever:', {
+      fontSize: '12px', color: '#555577'
     }).setOrigin(0.5).setDepth(21));
+
+    itens.push(this.add.rectangle(400, 134, 480, 1, 0x1a1a3a).setDepth(21));
 
     [save1, save2].forEach((save, i) => {
-      itens.push(...this.criarCardSlot(i + 1, 220 + i * 90, save));
+      itens.push(...this.criarCardSlot(i + 1, 200 + i * 106, save));
     });
 
-    const cancelar = this.add.text(400, 400, 'CANCELAR', {
-      fontSize: '14px', color: '#555577', letterSpacing: 3
+    const cancelar = this.add.text(400, 398, 'CANCELAR', {
+      fontSize: '13px', color: '#444466', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
 
     cancelar.on('pointerover', () => cancelar.setStyle({ color: '#aaaacc' }));
-    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#555577' }));
+    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#444466' }));
     cancelar.on('pointerup',   () => this.fecharOverlay());
     itens.push(cancelar);
 
@@ -205,30 +208,56 @@ export class MenuScene extends Scene {
 
   criarCardSlot(numero, cy, save) {
     const itens = [];
+    // Card: 480px wide, centrado em x=400 → borda esquerda x=160, direita x=640
+    const CARD_W = 480;
+    const CARD_H = 88;
+    const LEFT   = 400 - CARD_W / 2 + 22; // x=182 — margem interna esquerda
+    const RIGHT  = 400 + CARD_W / 2 - 16; // x=624 — margem interna direita
 
-    const card = this.add.rectangle(400, cy, 500, 72, 0x1e1e3a)
-      .setStrokeStyle(1, 0x333355).setDepth(21).setInteractive({ useHandCursor: true });
+    const card = this.add.rectangle(400, cy, CARD_W, CARD_H, 0x111128)
+      .setStrokeStyle(1, 0x252545).setDepth(21).setInteractive({ useHandCursor: true });
 
-    itens.push(this.add.text(148, cy - 28, 'SAVE ' + numero, {
-      fontSize: '10px', color: '#3dff6e', letterSpacing: 2
+    // Tag SAVE N
+    itens.push(this.add.text(LEFT, cy - 32, 'SAVE ' + numero, {
+      fontSize: '9px', color: '#3dff6e', letterSpacing: 3
     }).setDepth(22));
 
-    itens.push(this.add.text(148, cy - 10, save.nome, {
-      fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
+    // Nome do sobrevivente
+    itens.push(this.add.text(LEFT, cy - 16, save.nome || 'Sobrevivente', {
+      fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
     }).setDepth(22));
 
-    itens.push(this.add.text(148, cy + 14,
-      save.savedAt + '   •   ' + (save.genero === 'masc' ? 'Masculino' : 'Feminino'), {
-      fontSize: '11px', color: '#666688'
+    // Aliados selecionados
+    const aliados = (save.aliados || save.personagens || []).join(', ');
+    if (aliados) {
+      itens.push(this.add.text(LEFT, cy + 6, 'Aliados: ' + aliados, {
+        fontSize: '10px', color: '#00ccff'
+      }).setDepth(22));
+    }
+
+    // Data • Gênero • Onda
+    const generoTxt  = save.genero === 'fem' ? 'Feminino' : 'Masculino';
+    const ondaTxt    = save.ondaAtual ? '  •  Onda ' + save.ondaAtual : '';
+    itens.push(this.add.text(LEFT, cy + 22, (save.savedAt || '') + '  •  ' + generoTxt + ondaTxt, {
+      fontSize: '10px', color: '#444466'
     }).setDepth(22));
 
-    const aviso = this.add.text(634, cy, '⚠ sobrescrever', {
-      fontSize: '11px', color: '#aa4422'
+    // Aviso de sobrescrita (direita, centralizado verticalmente)
+    const aviso = this.add.text(RIGHT, cy, '⚠  sobrescrever', {
+      fontSize: '10px', color: '#7a3311'
     }).setOrigin(1, 0.5).setDepth(22);
 
-    card.on('pointerover', () => { card.setStrokeStyle(1, 0xff6633); card.setFillStyle(0x2a1a1a); aviso.setStyle({ color: '#ff6633' }); });
-    card.on('pointerout',  () => { card.setStrokeStyle(1, 0x333355); card.setFillStyle(0x1e1e3a); aviso.setStyle({ color: '#aa4422' }); });
-    card.on('pointerup',   () => {
+    card.on('pointerover', () => {
+      card.setStrokeStyle(1, 0xff6633);
+      card.setFillStyle(0x1e0e08);
+      aviso.setStyle({ color: '#ff6633' });
+    });
+    card.on('pointerout', () => {
+      card.setStrokeStyle(1, 0x252545);
+      card.setFillStyle(0x111128);
+      aviso.setStyle({ color: '#7a3311' });
+    });
+    card.on('pointerup', () => {
       this.fecharOverlay(() => {
         this.scene.start('StoryScene', { slot: numero, modo: this.modoEscolhido });
       });

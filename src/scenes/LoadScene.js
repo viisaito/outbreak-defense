@@ -149,6 +149,14 @@ export class LoadScene extends Scene {
       cabeloIndex: save.cabeloIndex ?? 0,
       roupaIndex:  save.roupaIndex  ?? 0
     });
+    // Estado da partida salvo
+    this.registry.set('ondaAtual',     save.ondaAtual  || 1);
+    this.registry.set('spSalvo',       save.sp         ?? null);
+    this.registry.set('baseHPSalvo',   save.baseHP     ?? null);
+    this.registry.set('baseMaxHPSalvo',save.baseMaxHP  ?? null);
+    this.registry.set('upgradesSalvos',save.upgrades   || null);
+    this.registry.set('avatarEscudo',  save.avatarEscudo || false);
+    this.registry.set('slotsSalvos',   save.slots      || null);
 
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.time.delayedCall(310, () => this.scene.start('GameScene'));

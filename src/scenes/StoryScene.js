@@ -17,7 +17,7 @@ const SLIDES = [
     bgPath:  bgTransito,
     tag:      'DIA 0 — 14h17',
     titulo:   'O COLAPSO',
-    texto:    'Em menos de oito horas, a cidade entrou em colapso.\nBuzinas, sirenes, gritos nas ruas.\n\nTodos correndo. Empurrando. Fugindo.\nSem saber pra onde — só pra longe.'
+    texto:    'Em menos de oito horas, a cidade entrou em colapso.\nBuzinas, sirenes, gritos nas ruas.\n\nTodos correndo. Empurrando. Fugindo.\nSem saber pra onde, só pra longe.'
   },
   {
     bgKey:   'slide-bar',
@@ -41,71 +41,77 @@ export class StoryScene extends Scene {
 
   create() {
     this.indice = 0;
-    this.bloqueado = false; // evita cliques duplos durante transição
+    this.bloqueado = false;
 
-    // Camadas criadas uma vez — atualizamos o conteúdo a cada slide
-    this.retBg     = this.add.rectangle(400, 225, 800, 450, 0x000000).setDepth(-2);
+    // Novo jogo → garante que o tutorial vai aparecer no GameScene
+    localStorage.removeItem('outbreak-tutorial-game');
+
+    // ── Fundo preto ────────────────────────────────────────────
+    this.add.rectangle(400, 225, 800, 450, 0x000000).setDepth(-2);
+
+    // ── Área da imagem (topo — 260px) ──────────────────────────
     this.retImagem = null;
-
-    // Ícone de placeholder no centro da imagem
-    this.iconePlaceholder = this.add.text(400, 160, '[ imagem ]', {
-      fontSize: '14px', color: '#555577'
+    this.iconePlaceholder = this.add.text(400, 115, '[ imagem ]', {
+      fontSize: '14px', color: '#333355'
     }).setOrigin(0.5).setDepth(0);
 
-    this.textoTag = this.add.text(140, 62, '', {
-      fontSize: '11px', color: '#3dff6e', letterSpacing: 4
-    }).setOrigin(0.5);
+    // Gradiente embaixo da imagem para fundir com o painel
+    const grad = this.add.graphics().setDepth(1);
+    for (let i = 0; i < 40; i++) {
+      const alpha = (i / 40) * 0.92;
+      grad.fillStyle(0x000000, alpha);
+      grad.fillRect(0, 220 + i, 800, 1);
+    }
 
-    this.textoTitulo = this.add.text(400, 95, '', {
-      fontSize: '28px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5);
+    // ── Painel de texto (parte inferior — 190px) ───────────────
+    this.add.rectangle(400, 355, 800, 190, 0x000000).setDepth(2);
+    // Linha divisória sutil no topo do painel
+    this.add.rectangle(400, 261, 800, 1, 0x1a1a3a).setDepth(3);
 
-    this.textoCorpo = this.add.text(400, 285, '', {
-      fontSize: '15px', color: '#ccccdd',
-      align: 'center', lineSpacing: 8
-    }).setOrigin(0.5);
+    // Tag (ex: "DIA 0 — 06h32")
+    this.textoTag = this.add.text(30, 270, '', {
+      fontSize: '10px', color: '#3dff6e', letterSpacing: 5
+    }).setDepth(5);
 
-    // Indicador de progresso (bolinhas)
+    // Título
+    this.textoTitulo = this.add.text(400, 290, '', {
+      fontSize: '22px', color: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(5);
+
+    // Corpo do texto
+    this.textoCorpo = this.add.text(400, 368, '', {
+      fontSize: '13px', color: '#aabbcc',
+      align: 'center', lineSpacing: 7,
+      wordWrap: { width: 680 }
+    }).setOrigin(0.5).setDepth(5);
+
+    // ── Rodapé: bolinhas + instrução ───────────────────────────
     this.bolinhas = [];
     for (let i = 0; i < SLIDES.length; i++) {
-      const b = this.add.circle(385 + i * 20, 425, 4, 0x444466);
+      const b = this.add.circle(388 + i * 16, 428, 3, 0x444466).setDepth(5);
       this.bolinhas.push(b);
     }
 
-    // Instrução de clique
-    this.textoAvanco = this.add.text(400, 438, 'clique para continuar', {
-      fontSize: '12px', color: '#555577'
-    }).setOrigin(0.5);
+    this.textoAvanco = this.add.text(400, 442, 'clique para continuar', {
+      fontSize: '11px', color: '#444466'
+    }).setOrigin(0.5).setDepth(5);
 
-    // Piscar a instrução
-    this.tweens.add({
-      targets: this.textoAvanco,
-      alpha: 0.2,
-      duration: 900,
-      yoyo: true,
-      repeat: -1
-    });
+    this.tweens.add({ targets: this.textoAvanco, alpha: 0.25, duration: 900, yoyo: true, repeat: -1 });
 
     this.mostrarSlide(0);
-
-    // Clique em qualquer lugar avança
     this.input.on('pointerdown', () => this.avancar());
   }
 
   mostrarSlide(i) {
     const slide = SLIDES[i];
-
-    // Fade rápido de entrada
     this.cameras.main.fadeIn(300, 0, 0, 0);
 
-    if (this.retImagem) {
-      this.retImagem.destroy();
-      this.retImagem = null;
-    }
+    if (this.retImagem) { this.retImagem.destroy(); this.retImagem = null; }
 
     if (slide.bgKey && this.textures.exists(slide.bgKey)) {
-      this.retImagem = this.add.image(400, 160, slide.bgKey)
-        .setDisplaySize(520, 200)
+      // Imagem ocupa toda a largura, altura 260px, topo da tela
+      this.retImagem = this.add.image(400, 130, slide.bgKey)
+        .setDisplaySize(800, 260)
         .setDepth(-1);
       this.iconePlaceholder.setVisible(false);
     } else {
@@ -116,17 +122,9 @@ export class StoryScene extends Scene {
     this.textoTitulo.setText(slide.titulo);
     this.textoCorpo.setText(slide.texto);
 
-    // Atualiza bolinhas de progresso
-    this.bolinhas.forEach((b, idx) => {
-      b.setFillStyle(idx === i ? 0x3dff6e : 0x444466);
-    });
+    this.bolinhas.forEach((b, idx) => b.setFillStyle(idx === i ? 0x3dff6e : 0x444466));
 
-    // Último slide: muda instrução
-    if (i === SLIDES.length - 1) {
-      this.textoAvanco.setText('clique para criar seu sobrevivente');
-    } else {
-      this.textoAvanco.setText('clique para continuar');
-    }
+    this.textoAvanco.setText(i === SLIDES.length - 1 ? 'clique para criar seu sobrevivente' : 'clique para continuar');
   }
 
   avancar() {

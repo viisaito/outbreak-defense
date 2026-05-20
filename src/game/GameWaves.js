@@ -8,7 +8,7 @@ export class GameWaves {
   // ── Timer de preparação ────────────────────────────────────────
   tick() {
     const s = this.s;
-    if (!s.preparacao || s.pausado) return;
+    if (!s.preparacao || s.pausado || s.tutorialAtivo) return;
     s.tempoPreparacao -= 1;
     s.textoTempo.setText('Preparação: ' + s.tempoPreparacao + ' s');
     if (s.tempoPreparacao <= 0 && !s.ondaIniciada) this.iniciar();
