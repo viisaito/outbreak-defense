@@ -24,8 +24,6 @@ export class GameWaves {
 
     if (s.timerPreparacaoEvent) { s.timerPreparacaoEvent.remove(false); s.timerPreparacaoEvent = null; }
     s.shop.fechar();
-    s.btnLoja.setVisible(false);
-    s.btnLojaTxt.setVisible(false);
     s.textoTempo.setText('Onda ' + s.ondaAtual + ' em curso!');
 
     const config       = s.configOndas[s.ondaAtual - 1];
@@ -35,7 +33,9 @@ export class GameWaves {
     s.eliminados = 0;
 
     this.spawnZumbi();
-    s.time.addEvent({ delay: 2000, repeat: totalNormais - 1, callback: this.spawnZumbi, callbackScope: this });
+    if (totalNormais > 1) {
+      s.time.addEvent({ delay: 2000, repeat: totalNormais - 2, callback: this.spawnZumbi, callbackScope: this });
+    }
     if (config.boss) {
       s.bossSpawnEvent = s.time.delayedCall(totalNormais * 2000 + 2500, this.spawnBoss, [], this);
     } else {
@@ -151,26 +151,23 @@ export class GameWaves {
     if (s.bossSpawnEvent) { s.bossSpawnEvent.remove(false); s.bossSpawnEvent = null; }
 
     if (s.ondaAtual === s.totalOndas) {
-      const estrelas = s.inimigosDanaram === 0 ? 3 : s.inimigosDanaram <= 2 ? 2 : 1;
-      s.time.delayedCall(1500, () => s.scene.start('VictoryScene', { onda: s.ondaAtual, estrelas, sp: s.sp }));
+      s.time.delayedCall(1500, () => s.scene.start('VictoryScene', { onda: s.ondaAtual, danados: s.inimigosDanaram, sp: s.sp }));
     } else {
       s.time.delayedCall(1200, () => this.painelProximaOnda());
     }
   }
 
   painelProximaOnda() {
-    const s      = this.s;
-    const objs   = [];
-    const estrelas = s.inimigosDanaram === 0 ? '★★★' : s.inimigosDanaram <= 2 ? '★★☆' : '★☆☆';
+    const s    = this.s;
+    const objs = [];
 
     objs.push(s.add.rectangle(400, 225, 800, 450, 0x000000, 0.65).setDepth(40));
-    objs.push(s.add.text(400, 160, 'ONDA ' + s.ondaAtual + ' CONCLUÍDA', { fontSize: '20px', color: '#3dff6e', letterSpacing: 4, fontStyle: 'bold' }).setOrigin(0.5).setDepth(41));
-    objs.push(s.add.text(400, 195, estrelas, { fontSize: '28px', color: '#ffdd00' }).setOrigin(0.5).setDepth(41));
-    objs.push(s.add.text(400, 230, 'Inimigos passaram: ' + s.inimigosDanaram, { fontSize: '13px', color: '#aaaacc' }).setOrigin(0.5).setDepth(41));
-    objs.push(s.add.text(400, 252, 'SP acumulado: ' + s.sp, { fontSize: '13px', color: '#00ccff' }).setOrigin(0.5).setDepth(41));
+    objs.push(s.add.text(400, 185, 'ONDA ' + s.ondaAtual + ' CONCLUÍDA', { fontSize: '20px', color: '#3dff6e', letterSpacing: 4, fontStyle: 'bold' }).setOrigin(0.5).setDepth(41));
+    objs.push(s.add.text(400, 218, 'Inimigos que passaram: ' + s.inimigosDanaram, { fontSize: '13px', color: '#aaaacc' }).setOrigin(0.5).setDepth(41));
+    objs.push(s.add.text(400, 240, 'SP acumulado: ' + s.sp, { fontSize: '13px', color: '#00ccff' }).setOrigin(0.5).setDepth(41));
 
-    const btn    = s.add.rectangle(400, 300, 200, 38, 0x1a4a2a).setStrokeStyle(2, 0x3dff6e).setDepth(41).setInteractive({ useHandCursor: true });
-    const btnTxt = s.add.text(400, 300, 'PRÓXIMA ONDA →', { fontSize: '14px', color: '#3dff6e', letterSpacing: 3 }).setOrigin(0.5).setDepth(42);
+    const btn    = s.add.rectangle(400, 290, 200, 38, 0x1a4a2a).setStrokeStyle(2, 0x3dff6e).setDepth(41).setInteractive({ useHandCursor: true });
+    const btnTxt = s.add.text(400, 290, 'PRÓXIMA ONDA →', { fontSize: '14px', color: '#3dff6e', letterSpacing: 3 }).setOrigin(0.5).setDepth(42);
     btn.on('pointerover', () => btn.setFillStyle(0x27ae60));
     btn.on('pointerout',  () => btn.setFillStyle(0x1a4a2a));
     btn.on('pointerup',   () => { objs.forEach(o => o.destroy()); this.proximaOnda(); });
@@ -188,8 +185,6 @@ export class GameWaves {
 
     s.textoOnda.setText('Onda: ' + s.ondaAtual + ' / ' + s.totalOndas);
     s.textoTempo.setText('Preparação: 15 s');
-    s.btnLoja.setVisible(true);
-    s.btnLojaTxt.setVisible(true);
 
     s.timerPreparacaoEvent = s.time.addEvent({
       delay: 1000, callback: this.tick, callbackScope: this,

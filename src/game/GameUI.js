@@ -19,12 +19,10 @@ export class GameUI {
     s.textoTempo = s.add.text(16, 82, 'Preparação: 15 s', { fontSize: '16px', color: '#ffffff' }).setDepth(10);
     s.textoSlot  = s.add.text(16, 432, 'Selecione um aliado e arraste-o para um slot para posicionar', { fontSize: '12px', color: '#aaaacc' }).setDepth(10);
 
-    // Botão LOJA
-    s.btnLoja    = s.add.rectangle(640, 20, 96, 28, 0x1a3a1a).setStrokeStyle(1, 0x3dff6e).setDepth(10).setInteractive({ useHandCursor: true });
-    s.btnLojaTxt = s.add.text(640, 20, '🛒 LOJA', { fontSize: '12px', color: '#3dff6e', letterSpacing: 2 }).setOrigin(0.5).setDepth(11);
-    s.btnLoja.on('pointerover', () => s.btnLoja.setFillStyle(0x27ae60));
-    s.btnLoja.on('pointerout',  () => s.btnLoja.setFillStyle(0x1a3a1a));
-    s.btnLoja.on('pointerup',   () => { if (s.preparacao && !s.pausado) s.shop.abrir(); });
+    // Dica sobre upgrades
+    s.add.text(640, 20, 'Clique num aliado para melhorias', {
+      fontSize: '9px', color: '#444466'
+    }).setOrigin(0.5).setDepth(10);
 
     // Botão PAUSA
     const btnPausa = s.add.rectangle(756, 20, 64, 28, 0x1a1a3a).setStrokeStyle(1, 0x555577).setDepth(10).setInteractive({ useHandCursor: true });
@@ -101,6 +99,13 @@ export class GameUI {
     const s = this.s;
     if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
 
+    // Bloquear drag se já está posicionado no campo
+    const jaNoSlot = s.slots.some(sl => sl.personagemId === id && sl.personagem);
+    if (jaNoSlot) {
+      s.textoSlot.setText((cfg.nome || id) + ' já está no campo — arraste diretamente do slot para mover.');
+      return;
+    }
+
     if (s.slotSelecionado) {
       s.slotSelecionado.setFillStyle(s.slotSelecionado.personagem ? 0x223388 : 0x444466);
       s.slotSelecionado = null;
@@ -110,48 +115,119 @@ export class GameUI {
     this.atualizarBordasAliados();
     s.textoSlot.setText(cfg.nome + ' selecionado — arraste para um slot para posicionar');
 
-    this._dragSource       = bg;
-    this._dragId           = id;
-    this._dragCfg          = cfg;
-    this._dragHoverSlot    = null;
-    this._dragPreview      = s.add.container(pointer.x, pointer.y).setDepth(50);
-    const previewBg        = s.add.rectangle(0, 0, 110, 40, 0x1a1a2e, 0.95).setStrokeStyle(2, cfg.cor);
-    const previewText      = s.add.text(0, 0, cfg.nome, { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+    this._dragSource    = bg;
+    this._dragId        = id;
+    this._dragCfg       = cfg;
+    this._dragHoverSlot = null;
+    this._dragSlotOrigem = null;
+    this._dragPreview   = s.add.container(pointer.x, pointer.y).setDepth(50);
+    const previewBg   = s.add.rectangle(0, 0, 110, 40, 0x1a1a2e, 0.95).setStrokeStyle(2, cfg.cor);
+    const previewText = s.add.text(0, 0, cfg.nome, { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
     this._dragPreview.add([previewBg, previewText]);
   }
 
+  // ── Drag iniciado a partir de um slot ocupado ─────────────────
+  _iniciarArrasteDeSlot(pointer, slot) {
+    const s = this.s;
+    if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
+    const id  = slot.personagemId;
+    const cfg = slot.cfg || PERSONAGENS_CONFIG[id] || { nome: id, cor: 0x888888 };
+    this._dragSlotOrigem = slot;
+    this._dragId         = id;
+    this._dragCfg        = cfg;
+    this._dragStartX     = pointer.x;
+    this._dragStartY     = pointer.y;
+    this._dragHoverSlot  = null;
+    this._dragPreview    = null; // criado só após threshold de movimento
+  }
+
   _atualizarArraste(pointer) {
+    const s = this.s;
+
+    // Drag pendente de slot: cria preview após mover > 8px
+    if (this._dragSlotOrigem && !this._dragPreview) {
+      const dx = pointer.x - this._dragStartX;
+      const dy = pointer.y - this._dragStartY;
+      if (Math.sqrt(dx * dx + dy * dy) > 8) {
+        this._dragPreview = s.add.container(pointer.x, pointer.y).setDepth(50);
+        const bg  = s.add.rectangle(0, 0, 110, 40, 0x1a1a2e, 0.95).setStrokeStyle(2, this._dragCfg.cor);
+        const txt = s.add.text(0, 0, this._dragCfg.nome, { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        this._dragPreview.add([bg, txt]);
+      } else {
+        return;
+      }
+    }
+
     if (!this._dragPreview) return;
     this._dragPreview.setPosition(pointer.x, pointer.y);
 
-    const s = this.s;
     const slot = this._slotEmPointer(pointer);
     if (slot !== this._dragHoverSlot) {
-      if (this._dragHoverSlot) {
-        this._dragHoverSlot.setFillStyle(this._dragHoverSlot.personagem ? 0x223388 : 0x444466);
-      }
+      if (this._dragHoverSlot) this._dragHoverSlot.setFillStyle(this._dragHoverSlot.personagem ? 0x223388 : 0x444466);
       this._dragHoverSlot = slot;
-      if (this._dragHoverSlot) {
-        const hoverColor = this._dragHoverSlot.personagem && this._dragHoverSlot.personagemId !== this._dragId ? 0xaa2222 : 0x00cc66;
-        this._dragHoverSlot.setFillStyle(hoverColor);
+      if (slot && slot !== this._dragSlotOrigem) {
+        slot.setFillStyle(slot.personagem && slot.personagemId !== this._dragId ? 0xaa2222 : 0x00cc66);
       }
     }
   }
 
   _finalizarArraste(pointer) {
-    if (!this._dragPreview) return;
     const s = this.s;
+
+    // Soltar sem mover = clique → abre shop de melhorias do personagem
+    if (this._dragSlotOrigem && !this._dragPreview) {
+      const slotOrigem = this._dragSlotOrigem;
+      this._dragSlotOrigem = null;
+      s.shop.abrir(slotOrigem.personagemId);
+      return;
+    }
+
+    if (!this._dragPreview) return;
+
     const slot = this._slotEmPointer(pointer);
+
+    // ── Drag originado de slot ocupado ──────────────────────────
+    if (this._dragSlotOrigem) {
+      const origem = this._dragSlotOrigem;
+      if (slot && slot !== origem) {
+        if (slot.personagem) {
+          s.textoSlot.setText('Slot ocupado! Arraste para um slot livre.');
+        } else {
+          const CUSTO = 20;
+          if (s.sp < CUSTO) {
+            s.textoSlot.setText('SP insuficiente para mover! (custo: ' + CUSTO + ' SP)');
+            this._cancelarArraste(false);
+            return;
+          }
+          s.sp -= CUSTO;
+          s.textoSP.setText('SP: ' + s.sp);
+          const id = this._dragId, cfg = this._dragCfg;
+          const hpPreservado = origem.hp;
+          s.slots_mgr.removerDoSlot(origem);
+          s.slots_mgr.posicionarNoSlot(slot, id, cfg);
+          slot.hp = hpPreservado;
+          s.slots_mgr.atualizarHPTorre(slot);
+          s.textoSlot.setText(cfg.nome + ' movido! (-' + CUSTO + ' SP)');
+        }
+      } else if (!slot) {
+        // Solto fora de todos os slots = remove
+        s.slots_mgr.removerDoSlot(origem);
+        s.textoSlot.setText('Personagem removido. Arraste da barra para reposicionar.');
+      }
+      // slot === origem: devolveu ao mesmo slot → cancela silenciosamente
+      this._cancelarArraste(false);
+      return;
+    }
+
+    // ── Drag originado do ícone inferior ────────────────────────
     if (slot) {
       if (slot.personagem && slot.personagemId !== this._dragId) {
         s.textoSlot.setText('Slot ocupado! Arraste para outro slot.');
         this._cancelarArraste(false);
         return;
       }
-
-      if (s.slotSelecionado && s.slotSelecionado !== slot) {
+      if (s.slotSelecionado && s.slotSelecionado !== slot)
         s.slotSelecionado.setFillStyle(s.slotSelecionado.personagem ? 0x223388 : 0x444466);
-      }
       s.slotSelecionado = slot;
       s.slots_mgr.colocarNoSlot();
       this._cancelarArraste(true);
@@ -164,19 +240,66 @@ export class GameUI {
 
   _cancelarArraste(keepSelection) {
     const s = this.s;
-    if (this._dragPreview) {
-      this._dragPreview.destroy();
-      this._dragPreview = null;
-    }
+    if (this._dragPreview) { this._dragPreview.destroy(); this._dragPreview = null; }
     if (this._dragHoverSlot) {
       this._dragHoverSlot.setFillStyle(this._dragHoverSlot.personagem ? 0x223388 : 0x444466);
       this._dragHoverSlot = null;
     }
+    this._dragSlotOrigem = null;
+    if (!keepSelection) { s.aliadoSelecionado = null; this.atualizarBordasAliados(); }
+  }
 
-    if (!keepSelection) {
-      s.aliadoSelecionado = null;
-      this.atualizarBordasAliados();
-    }
+  // ── Painel de habilidades do personagem no slot ───────────────
+  mostrarPainelPersonagem(slot) {
+    const s = this.s;
+    if (!slot?.personagemId) return;
+    const id  = slot.personagemId;
+    const cfg = PERSONAGENS_CONFIG[id] || {};
+    const nome    = id === 'avatar' ? s.personagem.nome : (cfg.nome || id);
+    const funcao  = id === 'avatar' ? 'Sobrevivente'    : (cfg.funcao  || '');
+    const passiva = id === 'avatar' ? 'Boost de dano\naos aliados próximos' : (cfg.passiva || '');
+    const cor     = id === 'avatar'
+      ? (CORES_ROUPAS[s.personagem?.roupaIndex] || 0x3dff6e)
+      : (cfg.cor || 0x888888);
+
+    const PW = 200, PH = 138;
+    // Painel à direita do slot; se não couber, vai à esquerda
+    const px = slot.x + 36 + PW / 2 > 790 ? slot.x - 36 - PW : slot.x + 36;
+    let   py = Math.max(8, Math.min(slot.y - PH / 2, 450 - PH - 8));
+
+    const objs = [];
+    objs.push(s.add.rectangle(px + PW / 2, py + PH / 2, PW, PH, 0x060d18)
+      .setStrokeStyle(2, cor).setDepth(70));
+
+    objs.push(s.add.text(px + PW / 2, py + 14, nome, {
+      fontSize: '13px', color: '#ffffff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(71));
+
+    if (funcao) objs.push(s.add.text(px + PW / 2, py + 28, funcao, {
+      fontSize: '9px', color: '#7788aa'
+    }).setOrigin(0.5).setDepth(71));
+
+    objs.push(s.add.rectangle(px + PW / 2, py + 40, PW - 20, 1, 0x1a2a3a).setDepth(71));
+
+    const hpRatio = slot.maxHp > 0 ? slot.hp / slot.maxHp : 0;
+    const hpCor   = hpRatio > 0.5 ? '#33cc33' : hpRatio > 0.25 ? '#ffcc33' : '#ff4444';
+    objs.push(s.add.text(px + 12, py + 50, '❤  ' + slot.hp + ' / ' + slot.maxHp, {
+      fontSize: '10px', color: hpCor
+    }).setDepth(71));
+
+    if (passiva) objs.push(s.add.text(px + PW / 2, py + 82, passiva, {
+      fontSize: '10px', color: '#aabbcc', align: 'center', lineSpacing: 4,
+      wordWrap: { width: PW - 20 }
+    }).setOrigin(0.5).setDepth(71));
+
+    objs.push(s.add.text(px + PW / 2, py + PH - 10, 'arraste para mover ou remover', {
+      fontSize: '8px', color: '#444466'
+    }).setOrigin(0.5).setDepth(71));
+
+    // Fundo invisível para fechar ao clicar fora
+    const closer = s.add.rectangle(400, 225, 800, 450, 0x000000, 0).setDepth(69).setInteractive();
+    closer.on('pointerdown', () => { objs.forEach(o => o.destroy()); closer.destroy(); });
+    objs.push(closer);
   }
 
   _slotEmPointer(pointer) {

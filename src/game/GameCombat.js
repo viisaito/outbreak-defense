@@ -66,12 +66,12 @@ export class GameCombat {
       let danoFinal  = cfg.dano + (s.upgrades.danoGlobal ? 5 : 0);
       if (slot.personagemId === 'vini' && s.upgrades.viniDano > 0)
         danoFinal = Math.round(danoFinal * (1 + s.upgrades.viniDano * 0.1));
-      const cdBase   = 0.8 * (s.upgrades.cooldownMult ?? 1.0);
+      const cdBase   = 0.8 * (s.upgrades.cooldownMult > 0 ? 0.75 : 1.0);
 
       for (const z of s.inimigos) {
         if (!z || !z.active) continue;
         const dist = PhaserMath.Distance.Between(slot.x, slot.y, z.x, z.y);
-        if (dist <= s.attackRange) {
+        if (dist <= (slot.attackRange ?? s.attackRange)) {
           z.hp -= danoFinal;
           slot.cooldown = cdBase;
           this._projetil(slot.x, slot.y, z.x, z.y, cfg);

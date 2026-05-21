@@ -27,9 +27,9 @@ export class GameScene extends Scene {
     this.ondaAtual         = _ondaSalva      || 1;
     this.totalOndas        = 3;
     this.configOndas       = [
-      { zumbis: 4, caes: 1 },
-      { zumbis: 3, caes: 2 },
-      { zumbis: 3, caes: 2, boss: true }
+      { zumbis: 4, caes: 2 },
+      { zumbis: 4, caes: 2 },
+      { zumbis: 4, caes: 2, boss: true }
     ];
     this.totalInimigosOnda = 0;
     this.spawnados         = 0;
@@ -53,7 +53,7 @@ export class GameScene extends Scene {
     // ── Upgrades progressivos ──────────────────────────────────
     this.upgrades = {
       danoGlobal:      0,
-      cooldownMult:    1.0,
+      cooldownMult:    0,   // 0 = não comprado; 1 = comprado (aplica ×0.75 no CD)
       baseReforco:     0,
       viniDano:        0,
       helenaCura:      0,
@@ -70,7 +70,8 @@ export class GameScene extends Scene {
     // ── Mundo ──────────────────────────────────────────────────
     this.add.rectangle(400, 225, 800, 450, 0x1a1a2e);
     this.baseColor = 0x33cc33;
-    this.base = this.add.rectangle(750, 225, 40, 450, this.baseColor);
+    this.base = this.add.rectangle(750, 225, 40, 450, this.baseColor)
+      .setInteractive({ useHandCursor: true });
     this.graficoCooldown = this.add.graphics().setDepth(6);
 
     // ── Módulos ────────────────────────────────────────────────
@@ -82,12 +83,17 @@ export class GameScene extends Scene {
 
     // ── Construção da cena ─────────────────────────────────────
     const posicoes = [
-      { x: 750, y: 90,  base: true },
+      { x: 750, y: 225, base: true },
       { x: 190, y: 140 },
       { x: 360, y: 310 },
       { x: 530, y: 180 }
     ];
     posicoes.forEach((pos, i) => this.slots_mgr.criarSlot(pos, i));
+
+    // Base: clique abre shop de melhorias da base
+    this.base.on('pointerup', () => {
+      if (!this.pausado && !this.tutorialAtivo) this.shop.abrir('base');
+    });
 
     this.ui.criarHUD();
     this.ui.criarIconesAliados();

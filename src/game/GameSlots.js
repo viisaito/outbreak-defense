@@ -34,33 +34,26 @@ export class GameSlots {
     slot.on('pointerout', () => {
       if (slot !== s.slotSelecionado) slot.setFillStyle(slot.personagem ? 0x223388 : 0x444466);
     });
-    slot.on('pointerdown', () => {
+    slot.on('pointerdown', (pointer) => {
       if (s.lojaAberta || s.tutorialAtivo || s.pausado) return;
 
-      if (s.slotSelecionado === slot) {
-        slot.setFillStyle(slot.personagem ? 0x223388 : 0x444466);
-        s.slotSelecionado = null;
-        s.textoSlot.setText('Seleção cancelada.');
-        return;
-      }
-      if (slot.personagem && s.aliadoSelecionado === slot.personagemId) {
-        this.removerDoSlot(slot);
-        s.slotSelecionado = null;
-        s.textoSlot.setText('Personagem removido do slot.');
-        return;
-      }
-      if (s.slotSelecionado) s.slotSelecionado.setFillStyle(s.slotSelecionado.personagem ? 0x223388 : 0x444466);
-
-      s.slotSelecionado = slot;
-      slot.setFillStyle(0x00cc66);
-
       if (slot.personagem) {
-        s.aliadoSelecionado = slot.personagemId;
-        s.ui.atualizarBordasAliados();
-        const nm = slot.personagemId === 'avatar' ? s.personagem.nome : (PERSONAGENS_CONFIG[slot.personagemId]?.nome || 'Aliado');
-        s.textoSlot.setText('Slot selecionado — clique em outro slot para mover ' + nm);
+        // Clique/drag em slot ocupado: inicia drag; soltar sem mover abre painel
+        s.ui._iniciarArrasteDeSlot(pointer, slot);
       } else {
-        const cfg = s.aliadoSelecionado === 'avatar' ? { nome: s.personagem.nome } : PERSONAGENS_CONFIG[s.aliadoSelecionado];
+        // Slot vazio: seleciona como alvo de posicionamento
+        if (s.slotSelecionado === slot) {
+          slot.setFillStyle(0x444466);
+          s.slotSelecionado = null;
+          s.textoSlot.setText('Seleção cancelada.');
+          return;
+        }
+        if (s.slotSelecionado) s.slotSelecionado.setFillStyle(0x444466);
+        s.slotSelecionado = slot;
+        slot.setFillStyle(0x00cc66);
+        const cfg = s.aliadoSelecionado === 'avatar'
+          ? { nome: s.personagem.nome }
+          : PERSONAGENS_CONFIG[s.aliadoSelecionado];
         s.textoSlot.setText('Slot selecionado — ' + (cfg ? cfg.nome + ' pronto para posicionar' : 'selecione um aliado'));
       }
     });
@@ -106,20 +99,29 @@ export class GameSlots {
 
     const slotAtual = s.slots.find(sl => sl.personagemId === id && sl.personagem);
     if (slotAtual === slot) { s.textoSlot.setText(cfg.nome + ' já está neste slot.'); return; }
+
+    let hpPreservado = null;
     if (slotAtual) {
       if (s.sp < 20) { s.textoSlot.setText('SP insuficiente para mover!'); return; }
       s.sp -= 20; s.textoSP.setText('SP: ' + s.sp);
+      hpPreservado = slotAtual.hp;
       this.removerDoSlot(slotAtual);
     }
 
     this.posicionarNoSlot(slot, id, cfg);
+    if (hpPreservado !== null) {
+      slot.hp = hpPreservado;
+      this.atualizarHPTorre(slot);
+    }
     s.slotSelecionado = null;
   }
 
   posicionarNoSlot(slot, id, cfg) {
     const s = this.s;
+    const range       = (id === 'avatar' && slot.isBaseSlot) ? 760 : s.attackRange;
+    slot.attackRange  = range;
     slot.personagem   = s.add.rectangle(slot.x, slot.y, 32, 32, cfg.cor).setDepth(2);
-    slot.rangeCircle  = s.add.circle(slot.x, slot.y, s.attackRange, 0x00ccff, 0.10).setDepth(-1);
+    slot.rangeCircle  = s.add.circle(slot.x, slot.y, range, 0x00ccff, 0.10).setDepth(-1);
     slot.aimIcon      = s.add.circle(slot.x, slot.y, 20, 0xffff00, 0.15).setStrokeStyle(2, 0xffff00, 0.8).setDepth(1);
     slot.hpBarFundo   = s.add.rectangle(slot.x, slot.y - 34, 44, 6, 0x222233).setDepth(3);
     slot.hpBar        = s.add.rectangle(slot.x - 22, slot.y - 34, 44, 6, cfg.cor).setOrigin(0, 0.5).setDepth(3);

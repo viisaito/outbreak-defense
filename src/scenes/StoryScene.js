@@ -24,7 +24,7 @@ const SLIDES = [
     bgPath:  bgBarco,
     tag:      'DIA 0 — 21h48',
     titulo:   'O BAR',
-    texto:    'Enquanto São Paulo se apagava ao redor,\nvocê encontrou abrigo num bar no centro da cidade.\nPortas travadas. Luz apagada. Silêncio pesado.\n\nMas você não estava sozinho.'
+    texto:    'Enquanto São Paulo se apagava ao redor,\nvocê encontrou abrigo num bar no centro da cidade.\nPortas travadas. Pessoas desoladas. Silêncio pesado.\n\nMas você não estava sozinho.'
   }
 ];
 

@@ -5,53 +5,38 @@ export class VictoryScene extends Scene {
   constructor() { super('VictoryScene'); }
 
   create() {
-    const danados  = this.scene.settings.data?.danados ?? 0;
-    const estrelas = danados === 0 ? 3 : danados <= 2 ? 2 : 1;
+    const danados = this.scene.settings.data?.danados ?? 0;
 
     this.add.rectangle(400, 225, 800, 450, 0x0a1a0a);
 
-    this.add.text(400, 55, 'VOCE SOBREVIVEU!', {
+    this.add.text(400, 70, 'VOCÊ SOBREVIVEU!', {
       fontSize: '38px', color: '#3dff6e', fontStyle: 'bold', letterSpacing: 4
     }).setOrigin(0.5);
 
-    this.add.text(400, 100, 'A base resistiu ao ataque dos infectados.', {
+    this.add.text(400, 118, 'A base resistiu ao ataque dos infectados.', {
       fontSize: '14px', color: '#666688'
     }).setOrigin(0.5);
 
-    this.add.rectangle(400, 122, 280, 1, 0x2a5a2a);
+    this.add.rectangle(400, 140, 280, 1, 0x2a5a2a);
 
-    // Estrelas
-    ['*', '*', '*'].forEach((s, i) => {
-      const cor  = i < estrelas ? '#ffdd00' : '#2a2a44';
-      const star = this.add.text(290 + i * 70, 175, '★', {
-        fontSize: '54px', color: cor
-      }).setOrigin(0.5).setAlpha(0).setScale(0.5);
+    const avTxt = danados === 0 ? 'DEFESA PERFEITA'
+                : danados <= 2  ? 'BOM TRABALHO'
+                :                 'SOBREVIVÊNCIA';
+    const avCor = danados === 0 ? '#3dff6e' : danados <= 2 ? '#ffdd00' : '#ff9944';
+    const avSub = danados === 0
+      ? 'Nenhum infectado alcançou a base!'
+      : danados + (danados === 1 ? ' infectado chegou' : ' infectados chegaram') + ' à base.';
 
-      this.tweens.add({
-        targets: star,
-        alpha: 1, scaleX: 1, scaleY: 1,
-        duration: 350, delay: 300 + i * 200,
-        ease: 'Back.Out'
-      });
-    });
-
-    const msgs = {
-      3: { txt: 'DEFESA PERFEITA',  cor: '#3dff6e', sub: 'Nenhum infectado alcancou a base!' },
-      2: { txt: 'BOM TRABALHO',     cor: '#ffdd00', sub: danados + (danados === 1 ? ' infectado chegou' : ' infectados chegaram') + ' a base.' },
-      1: { txt: 'SOBREVIVENCIA',    cor: '#ff9944', sub: danados + ' infectados chegaram a base. Treine mais!' }
-    };
-    const av = msgs[estrelas];
-
-    const tAvaliacao = this.add.text(400, 248, av.txt, {
-      fontSize: '20px', color: av.cor, letterSpacing: 5, fontStyle: 'bold'
+    const tAvaliacao = this.add.text(400, 190, avTxt, {
+      fontSize: '22px', color: avCor, letterSpacing: 5, fontStyle: 'bold'
     }).setOrigin(0.5).setAlpha(0);
 
-    const tSub = this.add.text(400, 276, av.sub, {
+    const tSub = this.add.text(400, 220, avSub, {
       fontSize: '13px', color: '#888899'
     }).setOrigin(0.5).setAlpha(0);
 
-    this.time.delayedCall(1050, () => {
-      this.tweens.add({ targets: [tAvaliacao, tSub], alpha: 1, duration: 400 });
+    this.time.delayedCall(400, () => {
+      this.tweens.add({ targets: [tAvaliacao, tSub], alpha: 1, duration: 500, ease: 'Power2' });
     });
 
     // Botao: Jogar novamente

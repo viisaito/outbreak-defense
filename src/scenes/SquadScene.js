@@ -186,7 +186,7 @@ export class SquadScene extends Scene {
       fontSize: '12px', color: '#ffaa44'
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
     this._hvPassiva = this.add.text(0, 0, '', {
-      fontSize: '10px', color: '#aaaacc', align: 'center',
+      fontSize: '8px', color: '#aaaacc', align: 'center',
       lineSpacing: 4, wordWrap: { width: 158 }
     }).setOrigin(0.5).setDepth(d + 1).setVisible(false);
 
