@@ -6,14 +6,22 @@ export class MenuScene extends Scene {
   constructor() { super('MenuScene'); }
 
   create() {
-    const cx = 400;
-    const cy = 225;
+    const gw = this.scale.width;
+    const gh = this.scale.height;
+    const cx = gw / 2;
+    const cy = gh / 2;
+
+    this.gw = gw;
+    this.gh = gh;
+    this.cx = cx;
+    this.cy = cy;
 
     this.overlay  = null; // referência ao overlay ativo
     this.modoEscolhido = null; // guarda o modo antes de checar slots
 
     // ── Fundo ──────────────────────────────────────────────────
-    this.add.rectangle(cx, cy, 800, 450, 0x1a1a2e);
+    this.add.image(cx, cy, 'menuBg').setDisplaySize(gw, gh).setDepth(-2);
+    this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.35);
 
     // ── Título ─────────────────────────────────────────────────
     this.add.text(cx, 90, 'OUTBREAK', {
@@ -36,7 +44,7 @@ export class MenuScene extends Scene {
     this.criarBotao(cx, 332, 'CONQUISTAS', () => this.fecharOverlay(() => this.scene.start('AchievementsScene')));
     this.criarBotao(cx, 372, 'OPÇÕES',     () => this.avisoEmBreve('Opções'));
 
-    this.add.text(790, 440, 'v0.1', { fontSize: '11px', color: '#444466' }).setOrigin(1);
+    this.add.text(gw - 10, gh - 10, 'v0.1', { fontSize: '11px', color: '#444466' }).setOrigin(1);
   }
 
   // ── PASSO 1: clicou START → escolha de modo ───────────────
@@ -47,21 +55,26 @@ export class MenuScene extends Scene {
 
   abrirOverlayModo() {
     const itens = [];
+    const cx = this.cx;
+    const cy = this.cy;
+    const gw = this.gw;
+    const gh = this.gh;
+    const bottomY = gh - 42;
 
     // Fundo
-    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.8).setDepth(20));
+    itens.push(this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.8).setDepth(20));
 
-    itens.push(this.add.text(400, 118, 'MODO DE JOGO', {
+    itens.push(this.add.text(cx, cy - 107, 'MODO DE JOGO', {
       fontSize: '18px', color: '#ffffff', letterSpacing: 5
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.text(400, 148, 'Escolha a dificuldade antes de começar:', {
+    itens.push(this.add.text(cx, cy - 77, 'Escolha a dificuldade antes de começar:', {
       fontSize: '12px', color: '#555577'
     }).setOrigin(0.5).setDepth(21));
 
     // ── Card NORMAL ──────────────────────────────────────────
     itens.push(...this.criarCardModo(
-      210, 260,
+      cx - 190, cy + 35,
       'NORMAL',
       '#3dff6e',
       0x1a2e1a,
@@ -76,7 +89,7 @@ export class MenuScene extends Scene {
 
     // ── Card DIFÍCIL ─────────────────────────────────────────
     itens.push(...this.criarCardModo(
-      590, 260,
+      cx + 190, cy + 35,
       'DIFÍCIL',
       '#ff4444',
       0x2e1a1a,
@@ -90,7 +103,7 @@ export class MenuScene extends Scene {
     ));
 
     // Cancelar
-    const cancelar = this.add.text(400, 408, 'CANCELAR', {
+    const cancelar = this.add.text(cx, bottomY, 'CANCELAR', {
       fontSize: '13px', color: '#555577', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
 
@@ -176,25 +189,29 @@ export class MenuScene extends Scene {
   // ── Overlay de sobrescrita de slot ────────────────────────
   abrirOverlaySobrescrita(save1, save2) {
     const itens = [];
+    const cx = this.cx;
+    const cy = this.cy;
+    const gh = this.gh;
+    const bottomY = gh - 52;
 
-    itens.push(this.add.rectangle(400, 225, 800, 450, 0x000000, 0.82).setDepth(20));
-    itens.push(this.add.rectangle(400, 225, 560, 360, 0x0a0f1c).setStrokeStyle(1, 0x2a2a4a).setDepth(20));
+    itens.push(this.add.rectangle(cx, cy, this.gw, gh, 0x000000, 0.82).setDepth(20));
+    itens.push(this.add.rectangle(cx, cy, 560, 360, 0x0a0f1c).setStrokeStyle(1, 0x2a2a4a).setDepth(20));
 
-    itens.push(this.add.text(400, 90, 'AMBOS OS SLOTS ESTÃO OCUPADOS', {
+    itens.push(this.add.text(cx, cy - 135, 'AMBOS OS SLOTS ESTÃO OCUPADOS', {
       fontSize: '13px', color: '#ff9944', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.text(400, 116, 'Escolha qual slot deseja sobrescrever:', {
+    itens.push(this.add.text(cx, cy - 109, 'Escolha qual slot deseja sobrescrever:', {
       fontSize: '12px', color: '#555577'
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.rectangle(400, 134, 480, 1, 0x1a1a3a).setDepth(21));
+    itens.push(this.add.rectangle(cx, cy - 91, 480, 1, 0x1a1a3a).setDepth(21));
 
     [save1, save2].forEach((save, i) => {
-      itens.push(...this.criarCardSlot(i + 1, 200 + i * 106, save));
+      itens.push(...this.criarCardSlot(i + 1, cy - 25 + i * 106, save));
     });
 
-    const cancelar = this.add.text(400, 398, 'CANCELAR', {
+    const cancelar = this.add.text(cx, bottomY, 'CANCELAR', {
       fontSize: '13px', color: '#444466', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
 
@@ -208,13 +225,14 @@ export class MenuScene extends Scene {
 
   criarCardSlot(numero, cy, save) {
     const itens = [];
-    // Card: 480px wide, centrado em x=400 → borda esquerda x=160, direita x=640
+    const cx = this.cx;
+    // Card: 480px wide, centrado no meio do jogo
     const CARD_W = 480;
     const CARD_H = 88;
-    const LEFT   = 400 - CARD_W / 2 + 22; // x=182 — margem interna esquerda
-    const RIGHT  = 400 + CARD_W / 2 - 16; // x=624 — margem interna direita
+    const LEFT   = cx - CARD_W / 2 + 22;
+    const RIGHT  = cx + CARD_W / 2 - 16;
 
-    const card = this.add.rectangle(400, cy, CARD_W, CARD_H, 0x111128)
+    const card = this.add.rectangle(cx, cy, CARD_W, CARD_H, 0x111128)
       .setStrokeStyle(1, 0x252545).setDepth(21).setInteractive({ useHandCursor: true });
 
     // Tag SAVE N
@@ -289,7 +307,7 @@ export class MenuScene extends Scene {
 
   avisoEmBreve(nome) {
     if (this.textoAviso) this.textoAviso.destroy();
-    this.textoAviso = this.add.text(400, 418, nome + ' — em breve', {
+    this.textoAviso = this.add.text(this.cx, this.gh - 32, nome + ' — em breve', {
       fontSize: '13px', color: '#ff9944'
     }).setOrigin(0.5);
     this.time.delayedCall(2000, () => { if (this.textoAviso) this.textoAviso.destroy(); });

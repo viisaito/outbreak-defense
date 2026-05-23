@@ -1,9 +1,9 @@
 // ── Configurações compartilhadas do GameScene ───────────────────
 
 export const PERSONAGENS_CONFIG = {
-  vini:   { nome: 'Vini',   funcao: 'Policial S.P.D.', cor: 0x3399ff, custo: 20, dano: 26, hp: 110, passiva: '+20% de dano\nc/ arma principal' },
-  helena: { nome: 'Helena', funcao: 'Garçonete',        cor: 0xff66aa, custo: 20, dano: 15, hp: 80,  passiva: 'Cura aliados\nem raio (+10HP/10s)' },
-  daniel: { nome: 'Daniel', funcao: 'Mecânico',         cor: 0xffaa33, custo: 20, dano: 20, hp: 95,  passiva: 'Chave de rosca:\nknockback em inimigos' }
+  vini:   { nome: 'Vini',   funcao: 'Policial S.P.D.', cor: 0x3399ff, custo: 20, dano: 28, hp: 100, passiva: '+20% de dano\nc/ arma principal' },
+  helena: { nome: 'Helena', funcao: 'Garçonete',        cor: 0xff66aa, custo: 20, dano: 21, hp: 110,  passiva: 'Cura aliados\nem raio (+15HP/10s)' },
+  daniel: { nome: 'Daniel', funcao: 'Mecânico',         cor: 0xffaa33, custo: 20, dano: 25, hp: 95,  passiva: 'Chave de rosca:\nknockback em inimigos' }
 };
 
 export const CORES_ROUPAS = [0x27ae60, 0x2980b9, 0xc0392b, 0xe67e22, 0x8e44ad];
@@ -25,9 +25,9 @@ export const LOJA_ITENS = [
     descricao: 'Nv1: +10% dano\nNv2: +20% | Nv3: +30%',
     custos: [30, 50, 80], maxNivel: 3 },
   // ── Helena ────────────────────────────────────────────────────
-  { id: 'helenaCura',   personagem: 'helena', label: 'Alcance de Cura',
-    descricao: 'Nv1: raio 400→500px\nNv2: raio 500→600px',
-    custos: [30, 50], maxNivel: 2 },
+  { id: 'helenaCura',   personagem: 'helena', label: 'Aumento de cura',
+    descricao: 'Nv1: hp+15\nNv2: hp+20 | Nv3: hp+30',
+    custos: [30, 50, 80], maxNivel: 3 },
   // ── Daniel ────────────────────────────────────────────────────
   { id: 'danielKnockback', personagem: 'daniel', label: 'Chave de Rosca',
     descricao: 'Nv1: 10% knockback\nNv2: 20% | Nv3: 30%',

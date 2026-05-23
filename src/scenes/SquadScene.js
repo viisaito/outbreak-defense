@@ -13,42 +13,42 @@ const PERSONAGENS = [
   {
     id: 'vini',   nome: 'VINI CARVALHO',   funcao: 'Policial S.P.D.',
     passiva: '+20% de dano com a\narma principal (.45)',
-    cor: 0x3399ff, bloqueado: false, bioma: 1, hp: 100, dano: 8
+    cor: 0x3399ff, bloqueado: false, bioma: 1, hp: 100, dano: 28
   },
   {
     id: 'helena', nome: 'HELENA MARIA',    funcao: 'Garçonete',
     passiva: 'Cura aliados em raio\n(+15HP a cada 10s)',
-    cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 110,  dano: 4
+    cor: 0xff66aa, bloqueado: false, bioma: 1, hp: 110,  dano: 21
   },
   {
     id: 'daniel', nome: 'DANIEL FERNANDES', funcao: 'Mecânico',
     passiva: 'Arremessa chave de rosca\n+ conserta armas e base',
-    cor: 0xffaa33, bloqueado: true, bioma: 2, hp: 95,  dano: 7
+    cor: 0xffaa33, bloqueado: true, bioma: 2, hp: 95,  dano: 25
   },
   {
     id: 'filipa', nome: 'FILIPA SAITO',    funcao: 'Hacker TI',
     passiva: 'Habilita terminais\ne portas eletrônicas',
-    cor: 0x9966ff, bloqueado: true,  bioma: 2, hp: 85,  dano: 4
+    cor: 0x9966ff, bloqueado: true,  bioma: 5, hp: 90,  dano: 22
   },
   {
     id: 'ana',    nome: 'ANA SILVA',       funcao: 'Jornalista',
     passiva: 'Itens extras em\ncômodos bloqueados',
-    cor: 0xffcc33, bloqueado: true,  bioma: 2, hp: 85,  dano: 3
+    cor: 0xffcc33, bloqueado: true,  bioma: 4, hp: 90,  dano: 26
   },
   {
     id: 'nadia',  nome: 'DRA. NÁDIA',      funcao: 'Cirurgiã',
     passiva: 'Cada inimigo morto\nrestaura 15% do HP',
-    cor: 0x33ffcc, bloqueado: true,  bioma: 3, hp: 90,  dano: 5
+    cor: 0x33ffcc, bloqueado: true,  bioma: 3, hp: 100,  dano: 24
   },
   {
     id: 'bruno',  nome: 'BRUNO FREITAS',   funcao: 'Ag. do Metrô SP',
     passiva: 'Finge de morto + Moeda:\n15% bônus de ataque crítico',
-    cor: 0x8899ff, bloqueado: true,  bioma: 3, hp: 90,  dano: 6
+    cor: 0x8899ff, bloqueado: true,  bioma: 3, hp: 90,  dano: 23
   },
   {
     id: 'marco',  nome: 'MARCO VÉIO',      funcao: 'Ex-combatente',
     passiva: 'Redução de 15% do\ndano recebido (tank)',
-    cor: 0xff6633, bloqueado: true,  bioma: 4, hp: 140, dano: 9
+    cor: 0xff6633, bloqueado: true,  bioma: 4, hp: 130, dano: 27
   }
 ];
 
@@ -253,7 +253,7 @@ export class SquadScene extends Scene {
       bloqueado: false,
       bioma:    1,
       hp:       100,
-      dano:     6,
+      dano:     25,
       isPlayer: true
     };
 
