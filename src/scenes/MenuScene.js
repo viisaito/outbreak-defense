@@ -1,4 +1,4 @@
-import { Scene } from 'phaser';
+import { Scene, Math as PhaserMath } from 'phaser';
 
 const SAVE_KEYS = ['outbreak-defense-save-1', 'outbreak-defense-save-2'];
 
@@ -16,12 +16,14 @@ export class MenuScene extends Scene {
     this.cx = cx;
     this.cy = cy;
 
-    this.overlay  = null; // referência ao overlay ativo
-    this.modoEscolhido = null; // guarda o modo antes de checar slots
+    this.overlay  = null;
+    this.modoEscolhido = null;
+
+    this.cameras.main.fadeIn(300, 0, 0, 0);
 
     // ── Fundo ──────────────────────────────────────────────────
     this.add.image(cx, cy, 'menuBg').setDisplaySize(gw, gh).setDepth(-2);
-    this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.35);
+    this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.40);
 
     // ── Título ─────────────────────────────────────────────────
     this.add.text(cx, 90, 'OUTBREAK', {
@@ -33,7 +35,7 @@ export class MenuScene extends Scene {
     }).setOrigin(0.5);
 
     this.add.text(cx, 188, 'São Paulo City — Bioma 01', {
-      fontSize: '13px', color: '#666688'
+      fontSize: '13px', color: '#9999bb'
     }).setOrigin(0.5);
 
     this.add.rectangle(cx, 215, 200, 1, 0x3dff6e);
@@ -44,7 +46,32 @@ export class MenuScene extends Scene {
     this.criarBotao(cx, 332, 'CONQUISTAS', () => this.fecharOverlay(() => this.scene.start('AchievementsScene')));
     this.criarBotao(cx, 372, 'OPÇÕES',     () => this.avisoEmBreve('Opções'));
 
-    this.add.text(gw - 10, gh - 10, 'v0.1', { fontSize: '11px', color: '#444466' }).setOrigin(1);
+    // ── Scanlines + Vinheta ─────────────────────────────────────
+    const fx = this.add.graphics().setDepth(5);
+    for (let y = 0; y < gh; y += 3) { fx.fillStyle(0x000000, 0.07); fx.fillRect(0, y, gw, 1); }
+    const vA = [0.04, 0.07, 0.11, 0.16, 0.20, 0.26];
+    const vS = [0.04, 0.07, 0.10, 0.14, 0.17, 0.21];
+    for (let i = 0; i < 6; i++) {
+      fx.fillStyle(0x000000, vA[i]);
+      fx.fillRect(0, 0, gw * vS[i], gh);
+      fx.fillRect(gw * (1 - vS[i]), 0, gw * vS[i], gh);
+    }
+    const tbA = [0.04, 0.08, 0.13, 0.18];
+    const tbS = [0.03, 0.06, 0.10, 0.14];
+    for (let i = 0; i < 4; i++) {
+      fx.fillStyle(0x000000, tbA[i]);
+      fx.fillRect(0, 0, gw, gh * tbS[i]);
+      fx.fillRect(0, gh * (1 - tbS[i]), gw, gh * tbS[i]);
+    }
+
+    this.add.text(gw - 12, gh - 10, 'v0.1 — São Paulo City', { fontSize: '11px', color: '#666688' }).setOrigin(1);
+
+    // ── Scanline animada (linha TV descendo) ──────────────────
+    this._scanY   = 0;
+    this._scanObj = this.add.rectangle(gw / 2, 0, gw, 2, 0xffffff).setAlpha(0.07).setDepth(6);
+
+    // ── Glitch periódico ──────────────────────────────────────
+    this._agendarGlitch();
   }
 
   // ── PASSO 1: clicou START → escolha de modo ───────────────
@@ -62,15 +89,18 @@ export class MenuScene extends Scene {
     const bottomY = gh - 42;
 
     // Fundo
-    itens.push(this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.8).setDepth(20));
+    itens.push(this.add.rectangle(cx, cy, gw, gh, 0x000000, 0.92).setDepth(20));
 
     itens.push(this.add.text(cx, cy - 107, 'MODO DE JOGO', {
       fontSize: '18px', color: '#ffffff', letterSpacing: 5
     }).setOrigin(0.5).setDepth(21));
 
-    itens.push(this.add.text(cx, cy - 77, 'Escolha a dificuldade antes de começar:', {
-      fontSize: '12px', color: '#555577'
+    itens.push(this.add.text(cx, cy - 83, 'Escolha a dificuldade antes de começar:', {
+      fontSize: '11px', color: '#aaaacc'
     }).setOrigin(0.5).setDepth(21));
+
+    // Linha separadora abaixo do cabeçalho
+    itens.push(this.add.rectangle(cx, cy - 66, 560, 1, 0x2a2a4a).setDepth(21));
 
     // ── Card NORMAL ──────────────────────────────────────────
     itens.push(...this.criarCardModo(
@@ -103,12 +133,18 @@ export class MenuScene extends Scene {
     ));
 
     // Cancelar
-    const cancelar = this.add.text(cx, bottomY, 'CANCELAR', {
-      fontSize: '13px', color: '#555577', letterSpacing: 3
-    }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
+    const cancelarBg = this.add.rectangle(cx, bottomY, 160, 30, 0x0d0d1e).setStrokeStyle(1, 0x333355).setDepth(21).setInteractive({ useHandCursor: true });
+    const cancelar   = this.add.text(cx, bottomY, 'CANCELAR', {
+      fontSize: '13px', color: '#aaaacc', letterSpacing: 3
+    }).setOrigin(0.5).setDepth(22).setInteractive({ useHandCursor: true });
+    itens.push(cancelarBg);
 
-    cancelar.on('pointerover', () => cancelar.setStyle({ color: '#aaaacc' }));
-    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#555577' }));
+    cancelarBg.on('pointerover', () => { cancelarBg.setFillStyle(0x1e1e38); cancelar.setStyle({ color: '#ffffff' }); });
+    cancelarBg.on('pointerout',  () => { cancelarBg.setFillStyle(0x0d0d1e); cancelar.setStyle({ color: '#aaaacc' }); });
+    cancelarBg.on('pointerup',   () => this.fecharOverlay());
+    cancelar.on('pointerover',   () => { cancelarBg.setFillStyle(0x1e1e38); cancelar.setStyle({ color: '#ffffff' }); });
+    cancelar.on('pointerout',    () => { cancelarBg.setFillStyle(0x0d0d1e); cancelar.setStyle({ color: '#aaaacc' }); });
+    cancelar.on('pointerup',     () => this.fecharOverlay());
     cancelar.on('pointerup',   () => this.fecharOverlay());
     itens.push(cancelar);
 
@@ -212,11 +248,11 @@ export class MenuScene extends Scene {
     });
 
     const cancelar = this.add.text(cx, bottomY, 'CANCELAR', {
-      fontSize: '13px', color: '#444466', letterSpacing: 3
+      fontSize: '13px', color: '#8888aa', letterSpacing: 3
     }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
 
-    cancelar.on('pointerover', () => cancelar.setStyle({ color: '#aaaacc' }));
-    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#444466' }));
+    cancelar.on('pointerover', () => cancelar.setStyle({ color: '#ffffff' }));
+    cancelar.on('pointerout',  () => cancelar.setStyle({ color: '#8888aa' }));
     cancelar.on('pointerup',   () => this.fecharOverlay());
     itens.push(cancelar);
 
@@ -295,14 +331,28 @@ export class MenuScene extends Scene {
 
   // ── Helpers ────────────────────────────────────────────────
   criarBotao(x, y, label, callback) {
+    const acento = this.add.rectangle(x - 117, y, 3, 22, 0x3dff6e).setAlpha(0).setDepth(1);
+    const seta   = this.add.text(x + 123, y, '›', {
+      fontSize: '18px', color: '#3dff6e'
+    }).setOrigin(0.5).setAlpha(0).setDepth(1);
+
+    const bg = this.add.rectangle(x, y, 240, 34, 0x000000, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(1);
+
     const texto = this.add.text(x, y, label, {
       fontSize: '22px', color: '#aaaacc', letterSpacing: 4
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5).setDepth(2);
 
-    texto.on('pointerover',  () => texto.setStyle({ color: '#3dff6e' }));
-    texto.on('pointerout',   () => texto.setStyle({ color: '#aaaacc' }));
-    texto.on('pointerdown',  () => texto.setStyle({ color: '#ffffff' }));
-    texto.on('pointerup',    () => { texto.setStyle({ color: '#3dff6e' }); callback(); });
+    bg.on('pointerover', () => {
+      texto.setStyle({ color: '#3dff6e' }); texto.setX(x + 6);
+      acento.setAlpha(1); seta.setAlpha(1);
+    });
+    bg.on('pointerout', () => {
+      texto.setStyle({ color: '#aaaacc' }); texto.setX(x);
+      acento.setAlpha(0); seta.setAlpha(0);
+    });
+    bg.on('pointerdown', () => texto.setStyle({ color: '#ffffff' }));
+    bg.on('pointerup',   () => { texto.setStyle({ color: '#3dff6e' }); callback(); });
   }
 
   avisoEmBreve(nome) {
@@ -311,5 +361,41 @@ export class MenuScene extends Scene {
       fontSize: '13px', color: '#ff9944'
     }).setOrigin(0.5);
     this.time.delayedCall(2000, () => { if (this.textoAviso) this.textoAviso.destroy(); });
+  }
+
+  // ── Loop: scanline desce quadro a quadro ──────────────────
+  update() {
+    if (!this._scanObj) return;
+    this._scanY = (this._scanY + 0.8) % this.scale.height;
+    this._scanObj.setY(this._scanY);
+  }
+
+  // ── Agenda próximo glitch com delay aleatório ─────────────
+  _agendarGlitch() {
+    this.time.delayedCall(PhaserMath.Between(2500, 6000), () => {
+      if (!this.scene.isActive('MenuScene')) return;
+      this._dispararGlitch();
+      this._agendarGlitch();
+    });
+  }
+
+  // ── Dispara 2–4 fatias horizontais com desvio lateral ─────
+  _dispararGlitch() {
+    const gw = this.scale.width;
+    const slices = PhaserMath.Between(2, 4);
+    for (let i = 0; i < slices; i++) {
+      const y   = PhaserMath.Between(40, 220);
+      const h   = PhaserMath.Between(2, 8);
+      const dx  = PhaserMath.Between(-12, 12);
+      const dur = PhaserMath.Between(60, 160);
+
+      const r1 = this.add.rectangle(gw / 2 + dx, y, gw, h, 0x3dff6e).setAlpha(0).setDepth(7);
+      const r2 = this.add.rectangle(gw / 2 - dx / 2, y + 1, gw, h, 0xff0044).setAlpha(0).setDepth(7);
+
+      this.tweens.add({ targets: r1, alpha: PhaserMath.FloatBetween(0.05, 0.13),
+        duration: 20, yoyo: true, hold: dur, onComplete: () => r1.destroy() });
+      this.tweens.add({ targets: r2, alpha: PhaserMath.FloatBetween(0.03, 0.08),
+        duration: 20, yoyo: true, hold: dur, onComplete: () => r2.destroy() });
+    }
   }
 }
