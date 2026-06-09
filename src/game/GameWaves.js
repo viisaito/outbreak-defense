@@ -151,7 +151,7 @@ export class GameWaves {
     if (s.bossSpawnEvent) { s.bossSpawnEvent.remove(false); s.bossSpawnEvent = null; }
 
     if (s.ondaAtual === s.totalOndas) {
-      s.time.delayedCall(1500, () => s.scene.start('VictoryScene', { onda: s.ondaAtual, danados: s.inimigosDanaram, sp: s.sp }));
+      s.time.delayedCall(1500, () => s.scene.start('VictoryScene', { onda: s.ondaAtual, danados: s.inimigosDanaram, sp: s.sp, eliminados: s.eliminados }));
     } else {
       s.time.delayedCall(1200, () => this.painelProximaOnda());
     }

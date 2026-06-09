@@ -1,11 +1,23 @@
 import { Scene } from 'phaser';
 import { AchievementsScene } from './AchievementsScene.js';
+import { formatStarRating, saveBestPerformance } from '../game/Performance.js';
 
 export class VictoryScene extends Scene {
   constructor() { super('VictoryScene'); }
 
   create() {
-    const danados = this.scene.settings.data?.danados ?? 0;
+    const data    = this.scene.settings.data || {};
+    const danados  = data.danados ?? 0;
+    const eliminados = data.eliminados ?? 0;
+
+    const estrelas = danados === 0 ? 3 : danados <= 2 ? 2 : 1;
+    const record   = saveBestPerformance({
+      estrelas,
+      ondas: 3,
+      eliminados,
+      hp: 100,
+      result: 'victory'
+    });
 
     this.add.rectangle(400, 225, 800, 450, 0x0a1a0a);
 
@@ -35,8 +47,19 @@ export class VictoryScene extends Scene {
       fontSize: '13px', color: '#888899'
     }).setOrigin(0.5).setAlpha(0);
 
+    const tStars = this.add.text(400, 260, formatStarRating(estrelas), {
+      fontSize: '28px', color: '#ffdd00', letterSpacing: 8
+    }).setOrigin(0.5).setAlpha(0);
+
+    const bestLabel = record.best
+      ? 'Melhor desempenho: ' + formatStarRating(record.best.estrelas) + ' • ' + record.best.ondas + ' / 3 ondas'
+      : 'Nenhum histórico anterior registrado ainda.';
+    const tRecord = this.add.text(400, 300, bestLabel, {
+      fontSize: '12px', color: '#ddcc88'
+    }).setOrigin(0.5).setAlpha(0);
+
     this.time.delayedCall(400, () => {
-      this.tweens.add({ targets: [tAvaliacao, tSub], alpha: 1, duration: 500, ease: 'Power2' });
+      this.tweens.add({ targets: [tAvaliacao, tSub, tStars, tRecord], alpha: 1, duration: 500, ease: 'Power2' });
     });
 
     // Botao: Jogar novamente
