@@ -88,7 +88,7 @@ export class GameWaves {
     const s = this.s;
     if (!z || !z.active) return;
 
-    const recompensa = z.tipo === 'boss' ? 30 : z.tipo === 'zumbi' ? 5 : 3;
+    const recompensa = z.tipo === 'boss' ? 30 : z.tipo === 'zumbi' ? 12 : 8;
     s.sp += recompensa;
     s.textoSP.setText('SP: ' + s.sp);
     s.ui.floatingText(z.x, z.y, '+' + recompensa + ' SP', '#00ccff');

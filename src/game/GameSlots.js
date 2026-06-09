@@ -14,6 +14,7 @@ export class GameSlots {
     slot.personagem   = null;
     slot.rangeCircle  = null;
     slot.aimIcon      = null;
+    slot.sniperLabel  = null;
     slot.cooldown     = 0;
     slot.hp           = 0;
     slot.maxHp        = 0;
@@ -100,10 +101,13 @@ export class GameSlots {
     const slotAtual = s.slots.find(sl => sl.personagemId === id && sl.personagem);
     if (slotAtual === slot) { s.textoSlot.setText(cfg.nome + ' já está neste slot.'); return; }
 
+    const freeFirstWaveMove = s.ondaAtual === 1 && s.preparacao;
     let hpPreservado = null;
     if (slotAtual) {
-      if (s.sp < 20) { s.textoSlot.setText('SP insuficiente para mover!'); return; }
-      s.sp -= 20; s.textoSP.setText('SP: ' + s.sp);
+      if (!freeFirstWaveMove) {
+        if (s.sp < 20) { s.textoSlot.setText('SP insuficiente para mover!'); return; }
+        s.sp -= 20; s.textoSP.setText('SP: ' + s.sp);
+      }
       hpPreservado = slotAtual.hp;
       this.removerDoSlot(slotAtual);
     }
@@ -114,6 +118,10 @@ export class GameSlots {
       this.atualizarHPTorre(slot);
     }
     s.slotSelecionado = null;
+
+    if (slotAtual) {
+      s.textoSlot.setText(cfg.nome + ' movido!' + (freeFirstWaveMove ? ' (sem custo inicial)' : ' (-20 SP)'));
+    }
   }
 
   posicionarNoSlot(slot, id, cfg) {
@@ -144,6 +152,14 @@ export class GameSlots {
       slot.healCircle = s.add.circle(slot.x, slot.y, raio, 0x00ff88, 0.04).setStrokeStyle(2, 0x00ff88, 0.4).setDepth(0.5);
     } else {
       slot.healCircle = null;
+    }
+
+    if (id === 'avatar' && slot.isBaseSlot) {
+      slot.sniperLabel = s.add.text(slot.x, slot.y + 28, 'SNIPER', {
+        fontSize: '10px', color: '#ff6633', fontStyle: 'bold', letterSpacing: 1
+      }).setOrigin(0.5).setDepth(5);
+    } else {
+      slot.sniperLabel = null;
     }
 
     slot.personagemId = id;
@@ -186,7 +202,7 @@ export class GameSlots {
   }
 
   removerDoSlot(slot) {
-    ['personagem', 'rangeCircle', 'aimIcon', 'healCircle', 'hpBarFundo', 'hpBar', 'armorBarFundo', 'armorBar'].forEach(k => {
+    ['personagem', 'rangeCircle', 'aimIcon', 'healCircle', 'sniperLabel', 'hpBarFundo', 'hpBar', 'armorBarFundo', 'armorBar'].forEach(k => {
       if (slot[k]) { slot[k].destroy(); slot[k] = null; }
     });
     slot.hp = 0; slot.maxHp = 0; slot.armor = 0; slot.maxArmor = 0; slot.personagemId = null; slot.cooldown = 10;

@@ -64,9 +64,14 @@ export class GameCombat {
 
       const cfg      = slot.cfg || PERSONAGENS_CONFIG[slot.personagemId] || { dano: 20 };
       let danoFinal  = cfg.dano + (s.upgrades.danoGlobal ? 5 : 0);
-      if (slot.personagemId === 'vini' && s.upgrades.viniDano > 0)
+      let cdBase     = 0.8 * (s.upgrades.cooldownMult > 0 ? 0.75 : 1.0);
+
+      if (slot.personagemId === 'avatar' && slot.isBaseSlot) {
+        danoFinal = 40 + (s.upgrades.danoGlobal ? 5 : 0);
+        cdBase = 7.0;
+      } else if (slot.personagemId === 'vini' && s.upgrades.viniDano > 0) {
         danoFinal = Math.round(danoFinal * (1 + s.upgrades.viniDano * 0.1));
-      const cdBase   = 0.8 * (s.upgrades.cooldownMult > 0 ? 0.75 : 1.0);
+      }
 
       for (const z of s.inimigos) {
         if (!z || !z.active) continue;
